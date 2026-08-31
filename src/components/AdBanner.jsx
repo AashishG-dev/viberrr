@@ -45,19 +45,31 @@ export default function AdBanner({
       if (!container) return;
       container.innerHTML = '';
 
+      // Create native container div required by Adsterra
+      const innerTargetDiv = document.createElement('div');
+      innerTargetDiv.id = `container-${sanitizedKey}`;
+      container.appendChild(innerTargetDiv);
+
       const adScript = document.createElement('script');
       adScript.type = 'text/javascript';
-      adScript.src = `https://www.highperformanceformat.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
       adScript.async = true;
-      adScript.crossOrigin = 'anonymous';
+      adScript.setAttribute('data-cfasync', 'false');
+      adScript.src = `https://pl31110848.profitableratecpmnetwork.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
 
       adScript.onload = () => {
-        // Real ad loaded successfully in background
         setIsAdLoaded(true);
       };
 
       adScript.onerror = () => {
-        setIsAdLoaded(false);
+        // Fallback to highperformanceformat domain if profitableratecpmnetwork is blocked
+        const fallbackScript = document.createElement('script');
+        fallbackScript.type = 'text/javascript';
+        fallbackScript.async = true;
+        fallbackScript.setAttribute('data-cfasync', 'false');
+        fallbackScript.src = `https://www.highperformanceformat.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
+        fallbackScript.onload = () => setIsAdLoaded(true);
+        fallbackScript.onerror = () => setIsAdLoaded(false);
+        container.appendChild(fallbackScript);
       };
 
       container.appendChild(adScript);
@@ -67,7 +79,7 @@ export default function AdBanner({
         if (container.children.length > 0) {
           setIsAdLoaded(true);
         }
-      }, 1500);
+      }, 1800);
 
       return () => {
         clearTimeout(checkTimer);
