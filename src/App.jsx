@@ -21,8 +21,10 @@ import AudioSourceModal, { AUDIO_SOURCES } from './components/AudioSourceModal';
 import AmbientEffectsModal from './components/AmbientEffectsModal';
 import AtmosphericOverlay from './components/AtmosphericOverlay';
 import AdBanner from './components/AdBanner';
+import OnboardingModal from './components/OnboardingModal';
 import Toast from './components/Toast';
 import { copyShareLink } from './utils/formatters';
+import { ShieldAlert } from 'lucide-react';
 
 export default function App() {
   // Read initial station from URL or fallback
@@ -49,6 +51,13 @@ export default function App() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isAudioSourceOpen, setIsAudioSourceOpen] = useState(false);
   const [isAmbientOpen, setIsAmbientOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
+    try {
+      return localStorage.getItem('viberr_onboarded') !== 'true';
+    } catch (e) {
+      return false;
+    }
+  });
   const [isRainVisualEnabled, setIsRainVisualEnabled] = useState(false);
   const [isFilmGrainEnabled, setIsFilmGrainEnabled] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -62,7 +71,7 @@ export default function App() {
   const { activeEffects, toggleEffect, setEffectVolume } = useAmbientSoundscapes();
 
   // Dynamic Smart Ad Lifecycle Manager
-  const { isAdVisible, timeRemaining, progressPercent, adCycleId, dismissAd } = useAdManager();
+  const { isAdVisible, adCycleId, dismissAd } = useAdManager();
 
   // Toast Notification State
   const [toastMsg, setToastMsg] = useState('');
@@ -315,8 +324,6 @@ export default function App() {
       <AdBanner
         isVisible={isAdVisible && !isMinimalMode && !isFullscreen}
         onDismiss={dismissAd}
-        timeRemaining={timeRemaining}
-        progressPercent={progressPercent}
         adCycleId={adCycleId}
         adsterraKey={import.meta.env.VITE_ADSTERRA_KEY || ''}
       />
@@ -479,6 +486,28 @@ export default function App() {
           showToast(`Bitrate set to ${q.toUpperCase()}`);
         }}
       />
+
+      {/* Onboarding Welcome Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onStartPlayback={() => {
+          if (!isPlaying) togglePlay();
+        }}
+      />
+
+      {/* Bottom Corner 18+ & Sponsored Ads Notice Badge */}
+      {!isFullscreen && !isMinimalMode && (
+        <button
+          onClick={() => setIsOnboardingOpen(true)}
+          className="fixed bottom-3 left-3 z-30 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/10 hover:border-amber-400/40 text-[10px] font-mono text-white/50 hover:text-white transition-all cursor-pointer shadow-lg group"
+          title="18+ Disclaimer & Sponsored Content Notice"
+          aria-label="18+ & Sponsored Ads Disclaimer"
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+          <span className="tracking-tight">18+ / Sponsored Ads</span>
+        </button>
+      )}
 
       {/* Action Toast Feedback */}
       <Toast

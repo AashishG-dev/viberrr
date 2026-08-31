@@ -105,28 +105,16 @@ export default function AdBanner({
       }`}
       style={{ maxWidth: '98vw', width: 'auto' }}
     >
-      <div className="glass-panel rounded-2xl p-2 sm:p-2.5 border border-white/20 shadow-2xl backdrop-blur-2xl flex flex-col items-center relative group">
+      <div className="glass-panel rounded-2xl p-2 sm:p-2.5 border border-white/20 shadow-2xl backdrop-blur-2xl flex flex-col items-center relative group bg-black/80">
         
-        {/* Smooth Countdown Progress Line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 overflow-hidden">
-          <motion.div
-            className="h-full bg-white/60"
-            style={{ width: `${100 - progressPercent}%` }}
-            transition={{ ease: 'linear', duration: 1 }}
-          />
-        </div>
-
-        {/* Top Bar: Sponsor Label + Auto-Close Countdown + Close Button */}
-        <div className="w-full flex items-center justify-between gap-4 px-1.5 pb-1.5 pt-0.5 border-b border-white/10 text-[10px] font-mono text-white/50 min-w-[280px]">
+        {/* Top Bar: Sponsor Label + Manual Close Button */}
+        <div className="w-full flex items-center justify-between gap-4 px-1.5 pb-1.5 pt-0.5 border-b border-white/10 text-[10px] font-mono text-white/60 min-w-[280px]">
           <div className="flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-white/90 font-bold tracking-wider uppercase">
-              SPONSOR
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold tracking-wider uppercase border border-amber-500/30">
+              SPONSORED
             </span>
-            
-            {/* Dynamic Auto-Close Countdown Pill */}
-            <span className="inline-flex items-center gap-1 text-white/60 bg-white/[0.04] px-2 py-0.5 rounded-md border border-white/10">
-              <Clock className="w-3 h-3 text-white/50" />
-              <span>Auto-closing in {timeRemaining}s</span>
+            <span className="text-[10px] text-white/50 font-space hidden sm:inline">
+              Click ad to support free streaming
             </span>
           </div>
 
@@ -142,7 +130,7 @@ export default function AdBanner({
         </div>
 
         {/* Permanent Live Adsterra Container */}
-        <div className="w-full flex items-center justify-center py-1.5 px-1 min-w-[280px] min-h-[60px]">
+        <div className="w-full flex items-center justify-center py-1.5 px-1 min-w-[280px] min-h-[60px] cursor-pointer">
           <div 
             ref={adSlotRef} 
             className="w-full flex items-center justify-center" 
