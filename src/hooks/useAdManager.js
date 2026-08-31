@@ -32,12 +32,12 @@ export function useAdManager() {
   const dismissAd = useCallback(() => {
     setIsAdVisible(false);
 
-    // Schedule next ad cycle after 3 minutes cooldown
+    // Schedule next fresh ad appearance 30 seconds after user closes
     if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
     cooldownTimerRef.current = setTimeout(() => {
       setAdCycleId((prev) => prev + 1);
       setIsAdVisible(true);
-    }, 180 * 1000);
+    }, 30 * 1000);
   }, []);
 
   // Cleanup on unmount

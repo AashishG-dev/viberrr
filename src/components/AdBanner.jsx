@@ -53,6 +53,22 @@ export default function AdBanner({
       innerTargetDiv.style.alignItems = 'center';
       container.appendChild(innerTargetDiv);
 
+      let checkInterval = null;
+
+      const verifyRealAdLoaded = () => {
+        if (!container || !innerTargetDiv) return;
+        // Check if Adsterra injected an iframe, img, link or non-empty creative container with real height
+        const hasAdContent = innerTargetDiv.querySelector('iframe, a, img, svg') !== null;
+        const hasVisibleHeight = innerTargetDiv.offsetHeight > 20 || container.offsetHeight > 20;
+        if (hasAdContent || hasVisibleHeight) {
+          setIsAdLoaded(true);
+          if (checkInterval) {
+            clearInterval(checkInterval);
+            checkInterval = null;
+          }
+        }
+      };
+
       const adScript = document.createElement('script');
       adScript.type = 'text/javascript';
       adScript.async = true;
@@ -60,7 +76,15 @@ export default function AdBanner({
       adScript.src = `https://pl31110848.profitableratecpmnetwork.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
 
       adScript.onload = () => {
-        setIsAdLoaded(true);
+        // Poll for up to 8 seconds to detect when ad is rendered
+        let attempts = 0;
+        checkInterval = setInterval(() => {
+          attempts++;
+          verifyRealAdLoaded();
+          if (attempts > 32) {
+            if (checkInterval) clearInterval(checkInterval);
+          }
+        }, 250);
       };
 
       adScript.onerror = () => {
@@ -70,20 +94,24 @@ export default function AdBanner({
         fallbackScript.async = true;
         fallbackScript.setAttribute('data-cfasync', 'false');
         fallbackScript.src = `https://www.highperformanceformat.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
-        fallbackScript.onload = () => setIsAdLoaded(true);
+        fallbackScript.onload = () => {
+          let attempts = 0;
+          checkInterval = setInterval(() => {
+            attempts++;
+            verifyRealAdLoaded();
+            if (attempts > 32) {
+              if (checkInterval) clearInterval(checkInterval);
+            }
+          }, 250);
+        };
         fallbackScript.onerror = () => setIsAdLoaded(false);
         container.appendChild(fallbackScript);
       };
 
       container.appendChild(adScript);
 
-      // Auto-show banner once script is injected
-      const timer = setTimeout(() => {
-        setIsAdLoaded(true);
-      }, 1000);
-
       return () => {
-        clearTimeout(timer);
+        if (checkInterval) clearInterval(checkInterval);
         if (container) {
           container.innerHTML = '';
         }
@@ -100,12 +128,12 @@ export default function AdBanner({
   return (
     <aside
       aria-label="Sponsored advertisement"
-      className={`fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-auto transition-all duration-300 ${
+      className={`fixed top-14 sm:top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-auto transition-all duration-300 ${
         isVisible && isAdLoaded ? 'opacity-100 scale-100 visible' : 'opacity-0 scale-95 invisible pointer-events-none'
       }`}
       style={{ maxWidth: '98vw', width: 'auto' }}
     >
-      <div className="glass-panel rounded-2xl p-2 sm:p-2.5 border border-white/20 shadow-2xl backdrop-blur-2xl flex flex-col items-center relative group bg-black/80">
+      <div className="glass-panel rounded-2xl p-2 sm:p-2.5 border border-white/20 shadow-2xl backdrop-blur-2xl flex flex-col items-center relative group bg-black/85">
         
         {/* Top Bar: Sponsor Label + Manual Close Button */}
         <div className="w-full flex items-center justify-between gap-4 px-1.5 pb-1.5 pt-0.5 border-b border-white/10 text-[10px] font-mono text-white/60 min-w-[280px]">
@@ -118,14 +146,24 @@ export default function AdBanner({
             </span>
           </div>
 
-          {/* Manual Close Button */}
+          {/* High-Priority Manual Close Button */}
           <button
-            onClick={onDismiss}
-            className="glass-button p-1 rounded-full text-white/70 hover:text-white hover:bg-white/20 transition-all cursor-pointer flex items-center justify-center"
-            title="Close Ad"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDismiss();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDismiss();
+            }}
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-red-500 text-white/80 hover:text-white border border-white/20 hover:border-red-400 flex items-center justify-center transition-all cursor-pointer relative z-50 hover:scale-110 active:scale-95 shadow-md"
+            title="Close Ad (Reloads in 30s)"
             aria-label="Close Advertisement"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
 
