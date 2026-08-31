@@ -80,12 +80,28 @@ export default function BackgroundStage({
   return (
     <div
       id="stage-container"
-      className="relative w-full h-full min-h-dvh overflow-hidden select-none"
+      className="relative w-full flex-1 flex flex-col justify-between overflow-hidden select-none min-h-0"
       style={{
         '--st-color': activeColor,
         '--st-glow': `${activeColor}55`
       }}
     >
+      {/* Dynamic Song Artwork Ambient Backdrop */}
+      {currentTrack?.thumbnail && (
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none transition-opacity duration-1000">
+          <motion.img
+            key={currentTrack.id || currentTrack.thumbnail}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 0.45, scale: 1.05 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            src={currentTrack.thumbnail}
+            alt=""
+            className="w-full h-full object-cover filter blur-2xl saturate-150 transform scale-110"
+          />
+        </div>
+      )}
+
       {/* Desktop & Tablet Background Layer with Smooth Crossfade & Zoom */}
       <div id="desktop-bg-layer" className="hidden sm:block absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {desktopImages.map((imgUrl, index) => {
@@ -109,7 +125,7 @@ export default function BackgroundStage({
       {/* Mobile Background Layer */}
       <div id="mobile-bg-layer" className="block sm:hidden absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img
-          src={activeVisuals?.mobileBg || desktopImages[0] || '/backgrounds/retro_bollywood_lounge.jpg'}
+          src={currentTrack?.thumbnail || activeVisuals?.mobileBg || desktopImages[0] || '/backgrounds/retro_bollywood_lounge.jpg'}
           alt={activeVisuals?.name || 'Viberr'}
           className="w-full h-full object-cover pointer-events-none"
           loading="eager"
@@ -166,7 +182,7 @@ export default function BackgroundStage({
       )}
 
       {/* Foreground Content */}
-      <div className="relative z-30 w-full h-full min-h-dvh flex flex-col justify-between p-3.5 sm:p-5 md:p-6 pointer-events-auto">
+      <div className="relative z-30 w-full flex-1 flex flex-col justify-center items-center p-2 sm:p-4 pointer-events-auto min-h-0">
         {children}
       </div>
     </div>

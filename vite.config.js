@@ -12,10 +12,14 @@ export default defineConfig({
     target: 'esnext',
     sourcemap: false, // Prevents source code reverse-engineering
     cssMinify: true,
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            if (id.includes('react-router')) {
+              return 'vendor-router';
+            }
             if (id.includes('react') || id.includes('react-dom')) {
               return 'vendor-react';
             }

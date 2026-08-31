@@ -6,6 +6,7 @@ export default function ShortcutsModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const shortcuts = [
+    { key: 'Ctrl + K / /', desc: 'Universal Global Search (Tracks & YouTube)' },
     { key: 'Space', desc: 'Play / Pause current track' },
     { key: 'S', desc: 'Toggle Shuffle Mode' },
     { key: 'A', desc: 'Open Ambient FX & Weather Shaders' },
