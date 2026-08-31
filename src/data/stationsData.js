@@ -20622,13 +20622,14 @@ export const STATIONS = [
 }
 ];
 
-export const DEFAULT_STATION_ID = 'dil-ke-paas-wale-gaane';
+export const DEFAULT_STATION_ID = 'dhh-drips';
 
 export function getStationById(id) {
-  return STATIONS.find(s => s.id === id) || STATIONS[0];
+  return STATIONS.find(s => s.id === id) || STATIONS.find(s => s.id === DEFAULT_STATION_ID) || STATIONS[0];
 }
 
 export function getStationBySlug(slug) {
-  if (!slug) return STATIONS[0];
-  return STATIONS.find(s => s.slug === slug || s.id === slug) || STATIONS[0];
+  if (!slug) return getStationById(DEFAULT_STATION_ID);
+  const normalized = slug.toLowerCase().trim();
+  return STATIONS.find(s => s.slug === normalized || s.id === normalized || s.name.toLowerCase() === normalized) || getStationById(DEFAULT_STATION_ID);
 }
