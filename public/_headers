@@ -1,0 +1,23 @@
+/*
+  # Enforce HSTS (Strict-Transport-Security)
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  # Prevent MIME-type sniffing
+  X-Content-Type-Options: nosniff
+  # Prevent Clickjacking / Framing
+  X-Frame-Options: SAMEORIGIN
+  # Cross-Origin Resource Policy
+  Cross-Origin-Resource-Policy: cross-origin
+  # Cross-Origin Opener Policy
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  # Referrer Policy
+  Referrer-Policy: strict-origin-when-cross-origin
+  # Permissions Policy for WebRTC microphone support
+  Permissions-Policy: camera=(), microphone=(self), payment=(), usb=(), geolocation=()
+  # Cloudflare Cache Control for Static Assets
+  X-Robots-Tag: all
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/backgrounds/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
