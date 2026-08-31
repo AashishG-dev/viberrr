@@ -318,6 +318,7 @@ export default function App() {
         timeRemaining={timeRemaining}
         progressPercent={progressPercent}
         adCycleId={adCycleId}
+        adsterraKey={import.meta.env.VITE_ADSTERRA_KEY || ''}
       />
 
       {/* Dynamic Background Stage with Real FFT Audio Visualizer Canvas */}
