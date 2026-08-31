@@ -48,6 +48,7 @@ export default function AdBanner({
       // Create native container div required by Adsterra
       const innerTargetDiv = document.createElement('div');
       innerTargetDiv.id = `container-${sanitizedKey}`;
+      innerTargetDiv.className = 'w-full flex items-center justify-center';
       container.appendChild(innerTargetDiv);
 
       const adScript = document.createElement('script');
@@ -56,33 +57,38 @@ export default function AdBanner({
       adScript.setAttribute('data-cfasync', 'false');
       adScript.src = `https://pl31110848.profitableratecpmnetwork.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
 
+      let checkInterval = null;
+
+      const verifyRealAdLoaded = () => {
+        // Only mark as loaded if real ad elements (iframe, img, a, canvas) are rendered with actual height
+        const hasAdElements = innerTargetDiv.querySelector('iframe, a, img, svg') !== null;
+        const hasHeight = innerTargetDiv.offsetHeight > 15 || container.offsetHeight > 15;
+        if (hasAdElements || hasHeight) {
+          setIsAdLoaded(true);
+          if (checkInterval) clearInterval(checkInterval);
+        }
+      };
+
       adScript.onload = () => {
-        setIsAdLoaded(true);
+        // Poll for 3 seconds to check if ad actually renders
+        let attempts = 0;
+        checkInterval = setInterval(() => {
+          attempts++;
+          verifyRealAdLoaded();
+          if (attempts > 12) {
+            clearInterval(checkInterval);
+          }
+        }, 250);
       };
 
       adScript.onerror = () => {
-        // Fallback to highperformanceformat domain if profitableratecpmnetwork is blocked
-        const fallbackScript = document.createElement('script');
-        fallbackScript.type = 'text/javascript';
-        fallbackScript.async = true;
-        fallbackScript.setAttribute('data-cfasync', 'false');
-        fallbackScript.src = `https://www.highperformanceformat.com/${encodeURIComponent(sanitizedKey)}/invoke.js`;
-        fallbackScript.onload = () => setIsAdLoaded(true);
-        fallbackScript.onerror = () => setIsAdLoaded(false);
-        container.appendChild(fallbackScript);
+        setIsAdLoaded(false);
       };
 
       container.appendChild(adScript);
 
-      // Fallback timer: if ad script injected iframe/content within 2s, show ad
-      const checkTimer = setTimeout(() => {
-        if (container.children.length > 0) {
-          setIsAdLoaded(true);
-        }
-      }, 1800);
-
       return () => {
-        clearTimeout(checkTimer);
+        if (checkInterval) clearInterval(checkInterval);
         if (container) {
           container.innerHTML = '';
         }
