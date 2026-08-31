@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" class="h-full antialiased dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- Security & Policy Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.highperformanceformat.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' https: http: blob:; connect-src 'self' https: wss:; worker-src 'self' blob:; base-uri 'self'; form-action 'self';" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(self), payment=(), usb=(), geolocation=()" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    
+    <!-- Hardcore SEO & Metadata -->
+    <title>Viberr — Aesthetic Live Radio & Hi-Fi Lossless Streams</title>
+    <meta name="description" content="Stream 28+ curated aesthetic music stations, Brazilian Phonk, Lo-Fi, Retro Bollywood, DHH, and 24/7 live web radio with lossless audio and visual screensavers." />
+    <meta name="keywords" content="live radio, lo-fi beats, phonk drift, aesthetic music, retro bollywood, hi-fi lossless streams, ambient focus, soma fm, nightride fm, cyberpunk radio, synthwave" />
+    <meta name="author" content="Viberr" />
+    <link rel="canonical" href="https://viberr.live" />
+    <meta name="theme-color" content="#07070a" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Open Graph / Facebook / Discord / WhatsApp -->
+    <meta property="og:site_name" content="Viberr" />
+    <meta property="og:type" content="music.radio_station" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://viberr.live" />
+    <meta property="og:title" content="Viberr — Aesthetic Live Radio & Hi-Fi Lossless Streams" />
+    <meta property="og:description" content="Stream 28+ curated aesthetic music stations, Brazilian Phonk, Lo-Fi, Retro Bollywood, DHH, and 24/7 live web radio with lossless audio." />
+    <meta property="og:image" content="/backgrounds/cyberpunk_drift_phonk.jpg" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="Viberr Aesthetic Live Radio" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Viberr" />
+    <meta name="twitter:creator" content="@Viberr" />
+    <meta name="twitter:url" content="https://viberr.live" />
+    <meta name="twitter:title" content="Viberr — Aesthetic Live Radio & Hi-Fi Lossless Streams" />
+    <meta name="twitter:description" content="Stream 28+ curated aesthetic music stations, Brazilian Phonk, Lo-Fi, Retro Bollywood, and 24/7 live web radio." />
+    <meta name="twitter:image" content="/backgrounds/cyberpunk_drift_phonk.jpg" />
+
+    <!-- JSON-LD Google Rich Snippets Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://viberr.live/#app",
+          "name": "Viberr",
+          "url": "https://viberr.live",
+          "applicationCategory": "MultimediaApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5 Audio.",
+          "description": "Stream 28+ curated aesthetic music stations, Brazilian Phonk, Lo-Fi, Retro Bollywood, DHH, and 24/7 live web radio with lossless audio."
+        },
+        {
+          "@type": "RadioStation",
+          "@id": "https://viberr.live/#radio",
+          "name": "Viberr Live Radio",
+          "url": "https://viberr.live",
+          "genre": ["Lo-Fi", "Phonk", "Synthwave", "Retro Bollywood", "Ambient", "Desi Hip-Hop"],
+          "potentialAction": {
+            "@type": "ListenAction",
+            "target": "https://viberr.live"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Favicon & PWA -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Viberr" />
+
+    <!-- Google Fonts: Syne, Space Grotesk, Plus Jakarta Sans, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-full h-full bg-[#07070a] text-neutral-100 overflow-hidden select-none font-sans">
+    <div id="root" class="h-full w-full"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

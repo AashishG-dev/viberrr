@@ -1,0 +1,19 @@
+{
+  "name": "Viberr — Aesthetic Live Radio & Hi-Fi Streams",
+  "short_name": "Viberr",
+  "description": "Stream 28+ curated aesthetic music stations, Brazilian Phonk, Lo-Fi, Retro Bollywood, and 24/7 live web radio with lossless audio and visual screensavers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070a",
+  "theme_color": "#07070a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment"]
+}
