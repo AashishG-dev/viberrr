@@ -37,13 +37,7 @@ export function AudioProvider({ children }) {
   const [isAmbientOpen, setIsAmbientOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isPluginsOpen, setIsPluginsOpen] = useState(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
-    try {
-      return localStorage.getItem('viberr_onboarded') !== 'true';
-    } catch (e) {
-      return false;
-    }
-  });
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isRainVisualEnabled, setIsRainVisualEnabled] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMinimalMode, setIsMinimalMode] = useState(() => {

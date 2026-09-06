@@ -1,6 +1,7 @@
 import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { AudioProvider, useAudio } from './context/AudioContext';
+import { STATIONS } from './data/stationsData';
 import TopHeader from './components/TopHeader';
 import PlayerBar from './components/PlayerBar';
 import FloatingMiniPlayer from './components/FloatingMiniPlayer';
@@ -119,6 +120,28 @@ function AppContent() {
         return;
       }
 
+      // Number keys 1-6 direct channel hopping
+      if (e.key >= '1' && e.key <= '6') {
+        const targetIdx = parseInt(e.key, 10) - 1;
+        const channelIds = [
+          'dhh-drips',
+          'phonk-drift',
+          'dil-ke-paas-wale-gaane',
+          'soft-lofi',
+          'speed-up-nightcore',
+          'slowed-reverb-3am'
+        ];
+        const targetId = channelIds[targetIdx];
+        if (targetId) {
+          const targetStation = STATIONS.find((s) => s.id === targetId);
+          if (targetStation) {
+            handleSelectStation(targetStation);
+            showToast(`Direct Hop: ${targetStation.name}`);
+          }
+        }
+        return;
+      }
+
       switch (e.key.toLowerCase()) {
         case ' ':
           e.preventDefault();
@@ -134,8 +157,8 @@ function AppContent() {
           break;
         case 's':
           e.preventDefault();
-          toggleShuffle();
-          showToast(!isShuffled ? 'Shuffle Enabled' : 'Shuffle Disabled');
+          handleNextTrack();
+          showToast('Hopped to Next Track');
           break;
         case 'a':
           e.preventDefault();
@@ -189,8 +212,7 @@ function AppContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     togglePlay,
-    toggleShuffle,
-    isShuffled,
+    handleSelectStation,
     handleToggleMinimalMode,
     handleOpenPip,
     handleNextTrack,
@@ -203,7 +225,7 @@ function AppContent() {
 
   return (
     <main
-      className={`w-screen h-screen overflow-hidden flex flex-col justify-between relative bg-black select-none ${
+      className={`w-full min-h-screen relative bg-[#121316] select-none text-[#e3e2e6] ${
         isFullscreen ? 'cursor-none' : ''
       }`}
       role="application"
@@ -234,29 +256,33 @@ function AppContent() {
           onShareStation={handleShareStation}
           currentAudioSource={currentAudioSource}
           onlineCount={onlineCount}
+          isPlaying={isPlaying}
+          onTogglePlay={togglePlay}
         />
       )}
 
       {/* Multi-Page Routes with Suspense Fallback */}
-      <Suspense
-        fallback={
-          <div className="flex-1 flex items-center justify-center text-white/50 text-xs font-mono">
-            <Loader2 className="w-5 h-5 animate-spin text-cyan-400 mr-2" />
-            <span>[ LOADING VIBERR EXPERIENCE... ]</span>
-          </div>
-        }
-      >
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/plugins" element={<PluginsPage />} />
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/equalizer" element={<EqualizerPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          {/* Fallback to Home */}
-          <Route path="*" element={<HomePage />} />
-        </Routes>
-      </Suspense>
+      <div className="w-full">
+        <Suspense
+          fallback={
+            <div className="min-h-[70vh] flex items-center justify-center text-white/50 text-xs font-mono">
+              <Loader2 className="w-5 h-5 animate-spin text-[#cfc6b0] mr-2" />
+              <span>[ LOADING VIBERR HI-FI EXPERIENCE... ]</span>
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/plugins" element={<PluginsPage />} />
+            <Route path="/library" element={<LibraryPage />} />
+            <Route path="/equalizer" element={<EqualizerPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            {/* Fallback to Home */}
+            <Route path="*" element={<HomePage />} />
+          </Routes>
+        </Suspense>
+      </div>
 
       {/* Floating Bottom Player Bar */}
       <PlayerBar
@@ -282,6 +308,10 @@ function AppContent() {
         onToggleMinimalMode={handleToggleMinimalMode}
         onOpenFloatingMiniPlayer={handleOpenPip}
         isPipActive={isPipActive}
+        volume={volume}
+        isMuted={isMuted}
+        onChangeVolume={changeVolume}
+        onToggleMute={toggleMute}
       />
 
       {/* Monetization Adsterra Sponsor Banner */}

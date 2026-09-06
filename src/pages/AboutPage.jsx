@@ -1,84 +1,102 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Radio, ShieldAlert, Sparkles, Zap, Heart, Keyboard, Globe, Cpu, Music } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
+import SiteFooter from '../components/SiteFooter';
 
 export default function AboutPage() {
   const { setIsShortcutsOpen, setIsSupportOpen } = useAudio();
 
   return (
-    <div className="w-full flex-1 overflow-y-auto px-3 sm:px-8 py-6 pb-28 custom-scroll max-w-[1720px] mx-auto text-white">
-      {/* Hero Header */}
-      <div className="relative rounded-3xl p-6 sm:p-10 mb-8 overflow-hidden glass-panel-neon border border-white/20 bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-black/80 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-mono mb-3">
-            <Radio className="w-3.5 h-3.5" />
-            <span>THE NEXT-GEN LOSSLESS MUSIC PLATFORM</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-black font-syne text-white tracking-tight leading-tight">
-            About Viberr
-          </h2>
-          <p className="text-xs sm:text-sm text-white/60 font-space mt-2 leading-relaxed">
-            Engineered for audiophiles, late-night coders, thinkers, and music lovers. An aesthetic, high-fidelity live music universe built with zero latency and high visual craft.
-          </p>
-        </div>
-      </div>
+    <div className="w-full min-h-screen bg-[#121316] text-[#e3e2e6] pt-24 pb-36 px-4 sm:px-8">
+      <div className="max-w-[1280px] mx-auto flex flex-col">
 
-      {/* Tech Architecture Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-            <Zap className="w-5 h-5" />
+        {/* Hero Header */}
+        <header className="mb-10 pb-8 border-b border-[#343538]/50">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1b1b1f] border border-[#343538]/60 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
+            <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest text-[10px]">
+              VIBERR ARCHIVAL BROADCAST CO. // MANIFESTO
+            </span>
           </div>
-          <h3 className="text-lg font-bold font-syne text-white">320kbps Lossless CDN</h3>
-          <p className="text-xs text-white/60 font-space leading-relaxed">
-            Delivers studio master uncompressed audio streams across 28+ handcrafted stations without dynamic range compression or buffering.
-          </p>
-        </div>
 
-        <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
-          <div className="w-10 h-10 rounded-2xl bg-pink-500/20 text-pink-400 flex items-center justify-center border border-pink-500/30">
-            <Cpu className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold font-syne text-white">Nuclear-Style Hybrid Engine</h3>
-          <p className="text-xs text-white/60 font-space leading-relaxed">
-            Integrates Spotify 100M+ catalog discovery with headless zero-CORS audio resolution for 100% full-length playback.
-          </p>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
-          <div className="w-10 h-10 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-            <Keyboard className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold font-syne text-white">Keyboard Hotkeys</h3>
-          <p className="text-xs text-white/60 font-space leading-relaxed">
-            Full keyboard control: <kbd className="px-1.5 py-0.5 bg-white/10 rounded">Space</kbd> Play/Pause, <kbd className="px-1.5 py-0.5 bg-white/10 rounded">Ctrl+K</kbd> Search, <kbd className="px-1.5 py-0.5 bg-white/10 rounded">M</kbd> Mute, <kbd className="px-1.5 py-0.5 bg-white/10 rounded">Z</kbd> Zen Minimal Mode.
-          </p>
-          <button
-            onClick={() => setIsShortcutsOpen(true)}
-            className="text-xs font-mono text-purple-300 hover:text-white underline cursor-pointer mt-2 block"
-          >
-            View all shortcuts →
-          </button>
-        </div>
-      </div>
-
-      {/* 18+ Content & Sponsored Content Notice */}
-      <div className="rounded-3xl p-6 sm:p-8 border border-amber-400/30 bg-amber-500/[0.04] mb-8">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-500/30">
-            <ShieldAlert className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold font-syne text-amber-200">
-              18+ Disclaimer & Sponsored Ads Notice
-            </h3>
-            <p className="text-xs text-white/60 font-space mt-1 leading-relaxed">
-              Viberr features raw artistic hip hop discographies (including uncensored MTV Hustle, Desi Hip Hop, drill, and underground rap) which may contain explicit lyrics. Additionally, sponsored banners and advertising placements help keep Viberr 100% free and independent.
+          <div className="max-w-3xl">
+            <h1 className="font-headline-lg text-3xl sm:text-5xl font-serif text-[#FAF8F5] tracking-tight">
+              About Viberr
+            </h1>
+            <p className="font-body-md text-[#c5c7c1] text-xs sm:text-sm mt-3 leading-relaxed">
+              Engineered for audiophiles, nocturnal developers, thinkers, and music purists. An autonomous high-fidelity broadcast environment running directly inside the browser with zero computational compression, zero tracking, and pure sonic integrity.
             </p>
           </div>
+        </header>
+
+        {/* Tech Architecture Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+          <div className="p-6 rounded-2xl bg-[#1b1b1f] border border-[#343538]/50 shadow-sm space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center border border-[#343538]/60">
+              <Zap className="w-5 h-5" />
+            </div>
+            <h3 className="font-headline-sm text-lg text-[#FAF8F5]">320kbps Lossless CDN</h3>
+            <p className="font-body-sm text-xs text-[#c5c7c1] leading-relaxed">
+              Direct edge streaming of uncompressed audio cuts across 28+ handcrafted vaults without algorithmic compression or dynamic ceiling limiting.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#1b1b1f] border border-[#343538]/50 shadow-sm space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center border border-[#343538]/60">
+              <Cpu className="w-5 h-5" />
+            </div>
+            <h3 className="font-headline-sm text-lg text-[#FAF8F5]">Real-Time Song Trends</h3>
+            <p className="font-body-sm text-xs text-[#c5c7c1] leading-relaxed">
+              Multi-source aggregation blending Spotify Viral Charts, YouTube Music trending feeds, and sovereign radio catalogs into a seamless surf stream.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-[#1b1b1f] border border-[#343538]/50 shadow-sm space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center border border-[#343538]/60">
+              <Keyboard className="w-5 h-5" />
+            </div>
+            <h3 className="font-headline-sm text-lg text-[#FAF8F5]">Tactile Keyboard Control</h3>
+            <p className="font-body-sm text-xs text-[#c5c7c1] leading-relaxed">
+              Full hardware hotkey navigation: <kbd className="px-1.5 py-0.5 bg-[#292a2d] text-[#FAF8F5] rounded text-[11px] font-mono">Space</kbd> Play, <kbd className="px-1.5 py-0.5 bg-[#292a2d] text-[#FAF8F5] rounded text-[11px] font-mono">S</kbd> Next, <kbd className="px-1.5 py-0.5 bg-[#292a2d] text-[#FAF8F5] rounded text-[11px] font-mono">1-6</kbd> Direct Channels, <kbd className="px-1.5 py-0.5 bg-[#292a2d] text-[#FAF8F5] rounded text-[11px] font-mono">M</kbd> Mute.
+            </p>
+            <button
+              onClick={() => setIsShortcutsOpen(true)}
+              className="text-xs font-mono text-[#cfc6b0] hover:text-[#FAF8F5] underline cursor-pointer mt-2 block"
+            >
+              View keyboard shortcut sheet →
+            </button>
+          </div>
         </div>
+
+        {/* 18+ Content & Sponsored Content Notice */}
+        <div className="rounded-2xl p-6 sm:p-8 border border-[#343538]/70 bg-[#16171a] shadow-sm mb-10">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center flex-shrink-0 border border-[#343538]/70">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-headline-sm text-base text-[#FAF8F5]">
+                18+ Disclaimer & Sponsored Content Notice
+              </h3>
+              <p className="font-body-sm text-xs text-[#c5c7c1] mt-1.5 leading-relaxed">
+                Viberr features raw artistic hip hop discographies (including uncensored MTV Hustle, Desi Hip Hop, drill, and underground rap) which may contain explicit lyrics. Additionally, non-intrusive sponsored placements help keep Viberr 100% free, sovereign, and accessible worldwide.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Manifesto Callout */}
+        <div className="p-8 sm:p-12 rounded-2xl bg-[#0d0e11] border border-[#343538]/50 shadow-inner text-center max-w-2xl mx-auto">
+          <p className="font-serif italic text-lg sm:text-xl text-[#FAF8F5] leading-relaxed">
+            "Radio was never meant to be solved by computers. It was meant to be curated by humans with taste."
+          </p>
+          <span className="font-label-telemetry uppercase text-[10px] text-[#8f918c] tracking-widest mt-4 block">
+            VIBERR HI-FI BROADCAST PROTOCOL // EST. 2026
+          </span>
+        </div>
+
+        {/* Site Footer with Watermark */}
+        <SiteFooter />
       </div>
     </div>
   );

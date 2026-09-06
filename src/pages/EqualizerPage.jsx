@@ -1,8 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Sliders, RotateCcw, Sparkles, Zap, Volume2, Music } from 'lucide-react';
+import { Sliders, RotateCcw, Zap, Volume2, ShieldCheck, Activity } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 import { EQ_FREQUENCIES, EQ_PRESETS } from '../hooks/useStudioEqualizer';
+import SiteFooter from '../components/SiteFooter';
 
 export default function EqualizerPage() {
   const {
@@ -15,115 +15,158 @@ export default function EqualizerPage() {
     handleSetPreampGain,
     handleResetEq,
     currentStation,
-    frequencies
+    showToast
   } = useAudio();
 
   const getFreqLabel = (freq) => {
     return freq >= 1000 ? `${freq / 1000}k` : `${freq}`;
   };
 
+  const onReset = () => {
+    handleResetEq();
+    if (showToast) {
+      showToast('Equalizer Reset to 0.0dB Flat');
+    }
+  };
+
   return (
-    <div className="w-full flex-1 overflow-y-auto px-3 sm:px-8 py-6 pb-28 custom-scroll max-w-[1720px] mx-auto text-white">
-      {/* Header */}
-      <div className="relative rounded-3xl p-6 sm:p-10 mb-8 overflow-hidden glass-panel-neon border border-white/20 bg-gradient-to-r from-teal-950/60 via-cyan-950/40 to-black/80 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/20 border border-teal-400/40 text-teal-300 text-xs font-mono mb-3">
-            <Sliders className="w-3.5 h-3.5" />
-            <span>10-BAND PARAMETRIC MASTERING CONSOLE</span>
+    <div className="w-full min-h-screen bg-[#121316] text-[#e3e2e6] pt-24 pb-36 px-4 sm:px-8">
+      <div className="max-w-[1280px] mx-auto flex flex-col">
+
+        {/* Console Header */}
+        <header className="mb-10 pb-8 border-b border-[#343538]/50">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1b1b1f] border border-[#343538]/60 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
+            <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest text-[10px]">
+              DSP CONVOLUTION ENGINE // 10-BAND PARAMETRIC MASTERING
+            </span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-black font-syne text-white tracking-tight leading-tight">
-            Pro Audio Equalizer
-          </h2>
-          <p className="text-xs sm:text-sm text-white/60 font-space mt-2 leading-relaxed">
-            Fine-tune low bass frequencies, vocal punch, stereo acoustics, and treble clarity with lossless DSP filtering.
-          </p>
-        </div>
-      </div>
 
-      {/* Preset Selector */}
-      <div className="rounded-3xl p-5 sm:p-7 border border-white/10 bg-white/[0.03] mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-white/70">
-            Acoustic Master Presets
-          </h3>
-          <button
-            onClick={handleResetEq}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs font-mono transition-all cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Flat</span>
-          </button>
-        </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <h1 className="font-headline-lg text-3xl sm:text-5xl font-serif text-[#FAF8F5] tracking-tight">
+                Studio Equalizer & DSP
+              </h1>
+              <p className="font-body-md text-[#c5c7c1] text-xs sm:text-sm mt-2 max-w-2xl leading-relaxed">
+                Hardware-grade tone shaping via high-precision Web Audio BiquadFilterNodes. Sculpt deep sub-bass resonance, midrange vocal warmth, and high-frequency silk.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-          {Object.entries(EQ_PRESETS).map(([key, p]) => (
-            <button
-              key={key}
-              onClick={() => handleSelectEqPreset(key)}
-              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                eqPreset === key
-                  ? 'bg-teal-500/30 border-teal-400/70 text-teal-200 shadow-lg font-bold'
-                  : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <div className="text-xs font-syne font-bold truncate">{p.name}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 10-Band Sliders Console */}
-      <div className="rounded-3xl p-6 sm:p-10 border border-white/10 bg-white/[0.03] relative overflow-hidden">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2 text-xs font-mono text-white/50">
-            <span>+12 dB</span>
-            <span>•</span>
-            <span>0 dB (FLAT)</span>
-            <span>•</span>
-            <span>-12 dB</span>
+            {/* Quick Actions */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onReset}
+                className="px-4 py-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#FAF8F5] border border-[#343538]/70 font-label-pill text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-[#cfc6b0]" />
+                <span>Reset Flat (0dB)</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono text-teal-400">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Biquad DSP Active</span>
+        </header>
+
+        {/* Acoustic Preset Strip */}
+        <section className="mb-8 p-6 rounded-2xl bg-[#1b1b1f] border border-[#343538]/50 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-label-telemetry uppercase text-xs text-[#cfc6b0] tracking-wider font-mono">
+              ACOUSTIC MASTER PRESETS
+            </span>
+            <span className="text-[10px] font-mono text-[#8f918c]">
+              REAL-TIME BIQUAD CALIBRATION
+            </span>
           </div>
-        </div>
 
-        <div className="grid grid-cols-5 sm:grid-cols-10 gap-4 sm:gap-6 items-end justify-items-center h-64 sm:h-72">
-          {EQ_FREQUENCIES.map((freq, idx) => {
-            const gain = eqBandGains[idx] || 0;
-            return (
-              <div key={freq} className="flex flex-col items-center gap-3 h-full justify-between w-full">
-                {/* dB Value Badge */}
-                <span className={`text-[11px] font-mono font-bold ${gain > 0 ? 'text-teal-300' : gain < 0 ? 'text-red-300' : 'text-white/40'}`}>
-                  {gain > 0 ? `+${gain}` : gain}dB
-                </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+            {Object.entries(EQ_PRESETS).map(([key, p]) => {
+              const isActive = eqPreset === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    handleSelectEqPreset(key);
+                    if (showToast) showToast(`Preset Loaded: ${p.name}`);
+                  }}
+                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-[#FAF8F5] text-[#121316] font-bold border-[#FAF8F5] shadow-sm'
+                      : 'bg-[#121316] hover:bg-[#292a2d] text-[#c5c7c1] hover:text-[#FAF8F5] border-[#343538]/60'
+                  }`}
+                >
+                  <div className="text-xs font-mono truncate">{p.name}</div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-                {/* Vertical Slider */}
-                <div className="relative flex items-center justify-center flex-1 w-8">
-                  <input
-                    type="range"
-                    min="-12"
-                    max="12"
-                    step="1"
-                    value={gain}
-                    onChange={(e) => handleSetBandGain(idx, parseFloat(e.target.value))}
-                    className="w-44 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer -rotate-90 origin-center accent-teal-400"
-                    aria-label={`Frequency ${freq}Hz gain`}
-                  />
-                </div>
+        {/* 10-Band Vertical Faders Console */}
+        <section className="p-6 sm:p-10 rounded-2xl bg-[#1b1b1f] border border-[#343538]/50 shadow-sm">
+          <div className="flex items-center justify-between pb-6 mb-8 border-b border-[#343538]/40">
+            <div className="flex items-center gap-3 text-xs font-mono text-[#8f918c]">
+              <span>+12 dB BOOST</span>
+              <span>•</span>
+              <span>0 dB FLAT</span>
+              <span>•</span>
+              <span>-12 dB CUT</span>
+            </div>
 
-                {/* Frequency Label */}
-                <div className="text-center">
-                  <span className="text-xs font-mono font-bold text-white/80">
-                    {getFreqLabel(freq)}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#0d0e11] border border-[#343538]/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
+              <span className="text-[10px] font-mono text-[#cfc6b0] uppercase">
+                24-BIT / 96kHz HARDWARE DSP ACTIVE
+              </span>
+            </div>
+          </div>
+
+          {/* Vertical Sliders Grid */}
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-3 sm:gap-6 items-end justify-items-center h-64 sm:h-72">
+            {EQ_FREQUENCIES.map((freq, idx) => {
+              const gain = eqBandGains[idx] || 0;
+              return (
+                <div key={freq} className="flex flex-col items-center gap-3 h-full justify-between w-full">
+                  {/* dB Value Badge */}
+                  <span
+                    className={`text-[11px] font-mono font-bold ${
+                      gain > 0
+                        ? 'text-[#cfc6b0]'
+                        : gain < 0
+                        ? 'text-[#e57373]'
+                        : 'text-[#8f918c]'
+                    }`}
+                  >
+                    {gain > 0 ? `+${gain}` : gain}dB
                   </span>
-                  <span className="block text-[9px] font-mono text-white/40">Hz</span>
+
+                  {/* Vertical Slider */}
+                  <div className="relative flex items-center justify-center flex-1 w-8">
+                    <input
+                      type="range"
+                      min="-12"
+                      max="12"
+                      step="1"
+                      value={gain}
+                      onChange={(e) => handleSetBandGain(idx, parseFloat(e.target.value))}
+                      className="w-44 h-2 bg-[#0d0e11] rounded-lg appearance-none cursor-pointer -rotate-90 origin-center accent-[#cfc6b0]"
+                      aria-label={`Frequency ${freq}Hz gain`}
+                    />
+                  </div>
+
+                  {/* Frequency Label */}
+                  <div className="text-center pt-2">
+                    <span className="text-xs font-mono font-bold text-[#FAF8F5]">
+                      {getFreqLabel(freq)}
+                    </span>
+                    <span className="block text-[9px] font-mono text-[#8f918c]">Hz</span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Site Footer with Watermark */}
+        <SiteFooter />
+
       </div>
     </div>
   );

@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Volume2, VolumeX, Maximize2, Minimize2, 
-  Radio, Coffee, HelpCircle, ChevronDown, Check, Share2, Headphones, Zap, Search, Blocks, Compass, Heart, Sliders, Info
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Play, Pause, Settings, Search, Radio, ChevronDown, Check, Share2, Sparkles } from 'lucide-react';
 import { STATIONS } from '../data/stationsData';
-import { Link, useLocation } from 'react-router-dom';
+
+const NAV_ITEMS = [
+  { id: 'deck', label: 'DECK', path: '/', hash: '#live-deck' },
+  { id: 'trends', label: 'TRENDS', path: '/', hash: '#frequency-directory' },
+  { id: 'explore', label: 'EXPLORE', path: '/explore' },
+  { id: 'equalizer', label: 'EQUALIZER', path: '/equalizer' },
+  { id: 'library', label: 'LIBRARY', path: '/library' },
+  { id: 'plugins', label: 'PLUGINS', path: '/plugins' },
+  { id: 'about', label: 'ABOUT', path: '/about' }
+];
 
 export default function TopHeader({
   currentStation,
@@ -19,31 +25,21 @@ export default function TopHeader({
   onOpenSupport,
   onOpenShortcuts,
   onOpenAudioSource,
+  onOpenAmbientFx,
   onOpenGlobalSearch,
   onShareStation,
   currentAudioSource,
-  onlineCount = 52
+  onlineCount = 3482,
+  isPlaying,
+  onTogglePlay
 }) {
-  const [timeString, setTimeString] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isStationMenuOpen, setIsStationMenuOpen] = useState(false);
   const [stationSearch, setStationSearch] = useState('');
   const dropdownRef = useRef(null);
-  const location = useLocation();
 
-  // Live Clock Updater
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setTimeString(
-        now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Close dropdown on outside click
+  // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -54,258 +50,192 @@ export default function TopHeader({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredStations = STATIONS.filter(st => 
-    st.name.toLowerCase().includes(stationSearch.toLowerCase()) ||
-    st.tagline?.toLowerCase().includes(stationSearch.toLowerCase())
+  const filteredStations = STATIONS.filter(
+    (st) =>
+      st.name.toLowerCase().includes(stationSearch.toLowerCase()) ||
+      st.tagline?.toLowerCase().includes(stationSearch.toLowerCase())
   );
 
-  const navLinks = [
-    { path: '/', label: 'Studio', icon: Radio },
-    { path: '/explore', label: 'Explore', icon: Compass },
-    { path: '/plugins', label: 'Plugins', icon: Blocks },
-    { path: '/library', label: 'Library', icon: Heart },
-    { path: '/equalizer', label: 'Equalizer', icon: Sliders },
-    { path: '/about', label: 'About', icon: Info }
-  ];
+  const handleNavClick = (item) => {
+    if (item.path === '/') {
+      if (location.pathname === '/') {
+        if (item.hash) {
+          const el = document.querySelector(item.hash);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        navigate(item.path + (item.hash || ''));
+      }
+    } else {
+      navigate(item.path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const isItemActive = (item) => {
+    if (item.path === '/') {
+      return location.pathname === '/' && (!location.hash || location.hash === item.hash);
+    }
+    return location.pathname === item.path;
+  };
 
   return (
-    <header className="w-full flex items-center justify-between pointer-events-auto select-none relative z-40 gap-2 sm:gap-4 px-2 sm:px-6 py-2.5 max-w-[1760px] mx-auto">
-      {/* Left Section: Brand Logo & Navigation Links */}
-      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-        <Link 
-          to="/"
-          className="glass-pill px-3.5 sm:px-4 py-1.5 rounded-full flex items-center gap-2 shadow-xl border border-white/20 hover:border-cyan-400/50 transition-all bg-black/70 cursor-pointer group"
-        >
-          <Headphones className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform flex-shrink-0" />
-          <span className="font-black font-syne tracking-wider text-xs sm:text-base text-white drop-shadow-sm">
-            VIBERR
-          </span>
-        </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#121316]/90 backdrop-blur-xl border-b border-[#343538]/50 select-none">
+      <div className="h-20 max-w-[1280px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
+        
+        {/* Left: Brand & Identity */}
+        <div className="flex items-center gap-3.5 relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsStationMenuOpen((prev) => !prev)}
+            className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-[#0d0e11] border border-[#343538]/80 hover:border-[#cfc6b0] transition-colors flex-shrink-0 cursor-pointer group shadow-sm"
+            title="Switch Radio Channel"
+          >
+            <span className="font-serif text-base font-bold text-[#cfc6b0] group-hover:scale-110 transition-transform">
+              V
+            </span>
+          </button>
 
-        {/* Multi-Page Navigation Bar */}
-        <nav className="hidden lg:flex items-center gap-1 bg-black/40 backdrop-blur-xl p-1 rounded-full border border-white/10 shadow-lg">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-headline-sm text-lg tracking-tight text-[#FAF8F5] leading-none">
+                VIBERR
+              </span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#292a2d] text-[#cfc6b0] uppercase font-mono font-medium">
+                LIVE
+              </span>
+              <button
+                onClick={() => setIsStationMenuOpen((prev) => !prev)}
+                className="text-[#8f918c] hover:text-[#FAF8F5] transition-colors cursor-pointer flex items-center text-xs font-mono"
+                title="Channel Selector"
+              >
+                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+              </button>
+            </div>
+            <span className="font-label-telemetry text-[#8f918c] uppercase tracking-widest mt-0.5 hidden sm:block text-[10px]">
+              LOSSLESS 24-BIT AUDIOPHILE ARCHIVE
+            </span>
+          </div>
+
+          {/* Station Quick Dropdown Menu */}
+          {isStationMenuOpen && (
+            <div className="absolute top-14 left-0 w-80 max-h-96 bg-[#1b1b1f] border border-[#343538] rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col backdrop-blur-2xl">
+              <div className="p-3 border-b border-[#343538]/60 bg-[#0d0e11]/80">
+                <input
+                  type="text"
+                  value={stationSearch}
+                  onChange={(e) => setStationSearch(e.target.value)}
+                  placeholder="Filter 28 sovereign vaults..."
+                  className="w-full px-3 py-1.5 rounded-lg bg-[#1f1f23] border border-[#343538] text-xs text-[#FAF8F5] placeholder-[#8f918c] focus:outline-none font-mono"
+                  autoFocus
+                />
+              </div>
+              <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scroll">
+                {filteredStations.map((station) => {
+                  const isSelected = currentStation?.id === station.id;
+                  return (
+                    <button
+                      key={station.id}
+                      onClick={() => {
+                        onSelectStation(station);
+                        setIsStationMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#FAF8F5] text-[#121316] font-semibold'
+                          : 'text-[#FAF8F5] hover:bg-[#292a2d]'
+                      }`}
+                    >
+                      <div className="truncate pr-2">
+                        <div className="truncate">{station.name}</div>
+                        <div className={`text-[10px] truncate ${isSelected ? 'text-[#121316]/70' : 'text-[#8f918c]'}`}>
+                          {station.tagline || `${station.songs?.length || 0} tracks`}
+                        </div>
+                      </div>
+                      {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Center: Multi-Page & Section Anchor Navigation */}
+        <nav className="hidden md:flex items-center gap-1 px-1.5 py-1 bg-[#1b1b1f]/90 rounded-full border border-[#343538]/60 shadow-inner overflow-x-auto scrollbar-none">
+          {NAV_ITEMS.map((item) => {
+            const isActive = isItemActive(item);
             return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium transition-all ${
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item)}
+                className={`px-3 py-1.5 rounded-full font-label-pill text-xs uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 shadow-sm font-bold'
-                    : 'text-white/60 hover:text-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-[#FAF8F5] text-[#121316] font-bold shadow-sm'
+                    : 'text-[#c5c7c1] hover:text-[#FAF8F5] hover:bg-[#292a2d]/60'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400' : 'text-white/50'}`} />
-                <span>{link.label}</span>
-              </Link>
+                {item.label}
+              </button>
             );
           })}
         </nav>
-      </div>
 
-      {/* Center: Global Search Bar Button & Listeners */}
-      <div className="flex items-center gap-2 flex-1 justify-center max-w-sm">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onOpenGlobalSearch}
-          className="glass-pill h-8 sm:h-9 px-3 sm:px-4 rounded-full text-xs font-mono text-white/70 hover:text-white flex items-center gap-2 shadow-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] hover:border-cyan-400/50 transition-all cursor-pointer w-full justify-between"
-          title="Global Search across Spotify, YouTube & 28+ stations (Ctrl + K)"
-        >
-          <div className="flex items-center gap-2 truncate">
-            <Search className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-            <span className="truncate font-space text-[11px] sm:text-xs text-white/80">Search Spotify, YouTube...</span>
+        {/* Right Header Actions */}
+        <div className="flex items-center gap-3">
+          {/* FLAC Telemetry Pill */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0d0e11] border border-[#343538]/60 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
+            <span className="font-label-telemetry text-[#cfc6b0] uppercase text-[10px]">
+              FLAC 96kHz DIRECT
+            </span>
           </div>
-          <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono bg-white/10 rounded text-white/50 border border-white/10">
-            Ctrl K
-          </kbd>
-        </motion.button>
 
-        {/* Live Listeners Pill */}
-        <div
-          id="live-online-pill"
-          className="hidden xl:flex glass-pill px-3 py-1.5 rounded-full text-[11px] text-white/80 items-center gap-2 shadow-xl border border-white/15 bg-white/[0.06] flex-shrink-0"
-          title="Live Active Listeners"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="font-mono font-medium tracking-tight text-white/90">{onlineCount} VIBING</span>
-        </div>
-      </div>
-
-      {/* Right Section: Volume, Station Selector, Fullscreen */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0" ref={dropdownRef}>
-        
-        {/* Mobile Navigation Dropdown Button */}
-        <div className="lg:hidden flex items-center gap-1">
-          {navLinks.slice(1, 4).map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`p-2 rounded-full transition-all ${
-                  isActive
-                    ? 'bg-cyan-500/30 text-cyan-300 border border-cyan-400/40'
-                    : 'text-white/60 hover:text-white bg-white/5'
-                }`}
-                title={link.label}
-              >
-                <Icon className="w-3.5 h-3.5" />
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Shortcuts Quick Button */}
-        <motion.button
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          onClick={onOpenShortcuts}
-          className="hidden xl:flex glass-button h-8 sm:h-9 px-3 rounded-full text-xs font-semibold text-white/85 items-center gap-1.5 hover:text-white cursor-pointer"
-          title="Keyboard Shortcuts (?)"
-        >
-          <HelpCircle className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
-          <span className="font-space">Shortcuts</span>
-        </motion.button>
-
-        {/* Volume Slider (Desktop) */}
-        <div className="hidden md:flex items-center gap-2 bg-black/60 backdrop-blur-xl px-3 py-1.5 rounded-full border border-white/15 group hover:bg-black/80 transition-colors shadow-lg">
+          {/* Search Trigger (⌘K) */}
           <button
-            onClick={onToggleMute}
-            className="text-white/80 hover:text-white transition-transform hover:scale-110 p-0.5 focus:outline-none cursor-pointer"
-            title="Mute / Unmute (M)"
+            onClick={onOpenGlobalSearch}
+            className="p-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#c5c7c1] hover:text-[#FAF8F5] border border-[#343538]/60 transition-colors cursor-pointer"
+            title="Global Search (⌘K)"
+            aria-label="Search"
           >
-            {isMuted || volume === 0 ? (
-              <VolumeX className="w-4 h-4 text-red-400" />
+            <Search className="w-4 h-4" />
+          </button>
+
+          {/* Audio Output & DSP Configuration */}
+          <button
+            onClick={onOpenAudioSource}
+            className="px-3 py-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#FAF8F5] border border-[#343538]/60 font-label-pill text-xs transition-colors uppercase tracking-wider flex items-center gap-1.5 shadow-sm group cursor-pointer"
+            title="Audio Output & DSP Configuration"
+          >
+            <Settings className="w-3.5 h-3.5 text-[#cfc6b0] group-hover:rotate-45 transition-transform" />
+            <span className="hidden sm:inline font-mono text-[11px]">CONFIG</span>
+          </button>
+
+          {/* Primary Quick Play/Pause Stream Button */}
+          <button
+            onClick={onTogglePlay}
+            className="px-4 py-2 rounded-full bg-[#FAF8F5] text-[#121316] hover:bg-[#eae6df] font-label-pill text-xs transition-all uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer font-bold"
+            title={isPlaying ? 'Pause Stream (Space)' : 'Play Stream (Space)'}
+          >
+            {isPlaying ? (
+              <>
+                <Pause className="w-3.5 h-3.5 fill-current" />
+                <span>PAUSE STREAM</span>
+              </>
             ) : (
-              <Volume2 className="w-4 h-4 text-cyan-400" />
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>PLAY STREAM</span>
+              </>
             )}
           </button>
-          <div className="relative flex items-center w-16 sm:w-20">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={isMuted ? 0 : volume}
-              onChange={(e) => onChangeVolume(parseFloat(e.target.value))}
-              className="custom-range"
-              aria-label="Volume slider"
-            />
-          </div>
         </div>
 
-        {/* Support Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onOpenSupport}
-          className="glass-button h-8 sm:h-9 w-8 sm:w-auto px-0 sm:px-3.5 rounded-full text-xs font-semibold text-white flex items-center justify-center gap-1.5 shadow-xl hover:border-amber-400/50 cursor-pointer"
-          title="Support Viberr"
-        >
-          <Coffee className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
-          <span className="hidden lg:inline whitespace-nowrap font-space font-medium">Support</span>
-        </motion.button>
-
-        {/* Station Selector Dropdown Trigger */}
-        <div className="relative">
-          <div className="scanner-border">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setIsStationMenuOpen(!isStationMenuOpen)}
-              className="glass-pill h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-full text-xs font-semibold text-white flex items-center gap-2 shadow-xl border border-white/20 hover:border-cyan-400/60 transition-all cursor-pointer bg-black/60"
-              title="Select Radio Station"
-            >
-              <div
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{
-                  backgroundColor: currentStation?.color || '#00f0ff',
-                  boxShadow: `0 0 10px ${currentStation?.color || '#00f0ff'}`
-                }}
-              />
-              <span className="truncate max-w-[80px] sm:max-w-[120px] font-syne font-bold">
-                {currentStation?.name}
-              </span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-white/60 transition-transform duration-300 ${
-                  isStationMenuOpen ? 'rotate-180 text-cyan-400' : ''
-                }`}
-              />
-            </motion.button>
-          </div>
-
-          {/* Station Menu Dropdown */}
-          <AnimatePresence>
-            {isStationMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-3xl glass-panel-neon border border-white/20 shadow-2xl p-3 z-50 overflow-hidden bg-black/90 text-white"
-              >
-                {/* Search Box inside dropdown */}
-                <div className="relative mb-2">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search 28+ stations..."
-                    value={stationSearch}
-                    onChange={(e) => setStationSearch(e.target.value)}
-                    className="w-full bg-white/10 text-white placeholder-white/40 text-xs rounded-xl pl-8 pr-3 py-2 outline-none border border-white/10 focus:border-cyan-400/60 font-space"
-                  />
-                </div>
-
-                <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scroll">
-                  {filteredStations.map((st) => (
-                    <button
-                      key={st.id}
-                      onClick={() => {
-                        onSelectStation(st);
-                        setIsStationMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer ${
-                        currentStation?.id === st.id
-                          ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/30'
-                          : 'hover:bg-white/10 text-white/80'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <div
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: st.color || '#00f0ff' }}
-                        />
-                        <span className="text-xs font-syne truncate">{st.name}</span>
-                      </div>
-                      {currentStation?.id === st.id && (
-                        <Check className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 ml-2" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Fullscreen Toggle */}
-        <motion.button
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onToggleFullscreen}
-          className="glass-button p-2 rounded-full text-white/80 hover:text-white cursor-pointer"
-          title={isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen Mode (F)'}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-3.5 h-3.5 text-cyan-300" />
-          ) : (
-            <Maximize2 className="w-3.5 h-3.5" />
-          )}
-        </motion.button>
       </div>
     </header>
   );

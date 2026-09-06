@@ -79,47 +79,56 @@ class StreamResolver {
   async resolvePlayableTrack(trackItem) {
     if (!trackItem) return null;
 
-    // A. If Curated Lossless Station song (320kbps full track)
-    if (trackItem.source === 'curated') {
+    // A. If Curated Lossless Station song (320kbps full track from R2)
+    if (trackItem.url && trackItem.url.includes('r2.dev') || trackItem.source === 'curated') {
       return {
         ...trackItem,
-        isYouTubeEngine: false
+        isYouTubeEngine: false,
+        isFullTrack: true
       };
     }
 
-    // B. If YouTube track: play 100% full length YouTube audio
-    if (trackItem.source === 'youtube' || trackItem.videoId) {
-      const videoId = trackItem.videoId || trackItem.id.replace(/^yt_/, '');
+    // B. If track already has a verified 11-character YouTube videoId
+    const existingVideoId = trackItem.videoId || (typeof trackItem.id === 'string' && trackItem.id.startsWith('yt_') ? trackItem.id.replace('yt_', '') : '');
+    if (existingVideoId && /^[a-zA-Z0-9_-]{11}$/.test(existingVideoId)) {
       return {
         ...trackItem,
-        videoId,
+        videoId: existingVideoId,
         url: '',
         isYouTubeEngine: true,
         isFullTrack: true,
-        duration: trackItem.duration || 240
+        duration: trackItem.duration || 210
       };
     }
 
-    // C. If Spotify track: resolve full-length YouTube candidate for complete 3-5min song
-    if (trackItem.source === 'spotify') {
-      try {
-        const query = `${trackItem.title} ${trackItem.artist}`.replace(/[^\w\s]/gi, ' ').trim();
-        const ytMatches = await youtubeProvider.search(query, 1);
-        if (ytMatches.length > 0 && ytMatches[0].videoId) {
-          return {
-            ...trackItem,
-            videoId: ytMatches[0].videoId,
-            url: '',
-            isYouTubeEngine: true,
-            isFullTrack: true,
-            duration: ytMatches[0].duration || trackItem.duration || 240
-          };
-        }
-      } catch (e) {}
+    // C. If track needs full-length resolution (Spotify, Apple chart, or trend item):
+    // Search YouTube for the complete 100% full-length song
+    try {
+      const query = `${trackItem.title} ${trackItem.artist}`.replace(/[^\w\s]/gi, ' ').trim();
+      const ytMatches = await youtubeProvider.search(query, 3);
+      const validMatch = ytMatches.find((m) => m.videoId && /^[a-zA-Z0-9_-]{11}$/.test(m.videoId));
+      
+      if (validMatch) {
+        return {
+          ...trackItem,
+          videoId: validMatch.videoId,
+          thumbnail: trackItem.thumbnail || validMatch.thumbnail,
+          url: '',
+          isYouTubeEngine: true,
+          isFullTrack: true,
+          duration: validMatch.duration || trackItem.duration || 210
+        };
+      }
+    } catch (e) {
+      console.warn('Full-track YouTube resolution failed:', e);
+    }
 
+    // D. Fallback to direct audio if available
+    if (trackItem.url) {
       return {
         ...trackItem,
-        isYouTubeEngine: false
+        isYouTubeEngine: false,
+        url: trackItem.url
       };
     }
 

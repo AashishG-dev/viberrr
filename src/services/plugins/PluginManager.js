@@ -1,5 +1,5 @@
-/**
- * Viberr Universal Plugin Manager (Nuclear Architecture)
+/*
+ * Viberr Universal Plugin Manager ( Architecture)
  * Handles registration, discovery, enabling/disabling, and latency measuring
  * of streaming, metadata, and lyrics providers.
  */

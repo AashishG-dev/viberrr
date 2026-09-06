@@ -248,25 +248,48 @@ export function useAudioPlayer(initialTracks = []) {
     const rawTrack = tracks[idx];
     if (!rawTrack) return;
 
-    const resolved = await streamResolver.resolvePlayableTrack(rawTrack);
-    const targetTrack = resolved || rawTrack;
-    const isYt = Boolean(targetTrack.isYouTubeEngine || targetTrack.videoId);
+    setIsLoading(true);
+    let targetTrack = rawTrack;
+
+    const hasValidYtId = Boolean(rawTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(rawTrack.videoId));
+    const isDirectR2 = Boolean(rawTrack.url && rawTrack.url.includes('r2.dev'));
+
+    if (!hasValidYtId && !isDirectR2) {
+      try {
+        const resolved = await streamResolver.resolvePlayableTrack(rawTrack);
+        if (resolved) {
+          targetTrack = resolved;
+        }
+      } catch (e) {
+        console.warn('Failed to resolve full-length track:', e);
+      }
+    }
+
+    const isYt = Boolean(targetTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(targetTrack.videoId));
 
     if (isYt) {
       if (audioRef.current) audioRef.current.pause();
       ytEngine.loadVideo(targetTrack.videoId, true, targetTrack.duration || 210);
       setIsPlaying(true);
+      setIsLoading(false);
       if (targetTrack.duration) setDuration(targetTrack.duration);
     } else if (targetTrack.url) {
       ytEngine.pauseVideo();
       const audio = audioRef.current;
       if (audio) {
         audio.src = targetTrack.url;
+        audio.volume = isMuted ? 0 : volume;
         audio.load();
-        audio.play().then(() => setIsPlaying(true)).catch((err) => {
+        audio.play().then(() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+        }).catch((err) => {
           console.warn('Playback error:', err);
+          setIsLoading(false);
         });
       }
+    } else {
+      setIsLoading(false);
     }
 
     // Infinite Autoplay
@@ -281,26 +304,43 @@ export function useAudioPlayer(initialTracks = []) {
         }
       });
     }
-  }, [tracks, isLiveStream, ytEngine]);
+  }, [tracks, isLiveStream, ytEngine, isMuted, volume]);
 
-  // Handle playing any track directly from search or plugins with Infinite Queue
-  const playDirectTrack = useCallback((trackItem, initialQueue = []) => {
+  // Handle playing any track directly from search or plugins with 100% Full-Length Songs
+  const playDirectTrack = useCallback(async (trackItem, initialQueue = []) => {
     if (!trackItem) return;
 
-    const isYt = Boolean(trackItem.videoId || trackItem.isYouTubeEngine || trackItem.source === 'youtube');
-    const safeTrack = {
-      ...trackItem,
-      id: trackItem.id || `track_${Date.now()}`,
-      title: trackItem.title || 'Unknown Track',
-      artist: trackItem.artist || 'Viberr Artist',
-      thumbnail: trackItem.thumbnail || '/favicon.svg',
-      duration: trackItem.duration || 210,
-      videoId: trackItem.videoId || (trackItem.source === 'youtube' ? trackItem.id.replace(/^yt_/, '') : ''),
-      isYouTubeEngine: isYt,
-      url: isYt ? '' : (trackItem.url || '')
-    };
-
     setIsLiveStream(false);
+    setIsLoading(true);
+
+    let targetTrack = trackItem;
+    const hasValidYtId = Boolean(trackItem.videoId && /^[a-zA-Z0-9_-]{11}$/.test(trackItem.videoId));
+    const isDirectR2 = Boolean(trackItem.url && trackItem.url.includes('r2.dev'));
+
+    if (!hasValidYtId && !isDirectR2) {
+      try {
+        const resolved = await streamResolver.resolvePlayableTrack(trackItem);
+        if (resolved) {
+          targetTrack = resolved;
+        }
+      } catch (e) {
+        console.warn('Full-length resolution error:', e);
+      }
+    }
+
+    const isYt = Boolean(targetTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(targetTrack.videoId));
+    const safeTrack = {
+      ...targetTrack,
+      id: targetTrack.id || `track_${Date.now()}`,
+      title: targetTrack.title || 'Unknown Track',
+      artist: targetTrack.artist || 'Viberr Artist',
+      thumbnail: targetTrack.thumbnail || '/favicon.svg',
+      duration: targetTrack.duration || 210,
+      videoId: isYt ? targetTrack.videoId : '',
+      isYouTubeEngine: isYt,
+      isFullTrack: true,
+      url: isYt ? '' : (targetTrack.url || '')
+    };
 
     const restQueue = Array.isArray(initialQueue)
       ? initialQueue.filter((t) => t && t.id !== safeTrack.id)
@@ -316,17 +356,25 @@ export function useAudioPlayer(initialTracks = []) {
       if (audioRef.current) audioRef.current.pause();
       ytEngine.loadVideo(safeTrack.videoId, true, safeTrack.duration || 210);
       setIsPlaying(true);
+      setIsLoading(false);
       if (safeTrack.duration) setDuration(safeTrack.duration);
     } else if (safeTrack.url) {
       ytEngine.pauseVideo();
       const audio = audioRef.current;
       if (audio) {
         audio.src = safeTrack.url;
+        audio.volume = isMuted ? 0 : volume;
         audio.load();
-        audio.play().then(() => setIsPlaying(true)).catch((err) => {
+        audio.play().then(() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+        }).catch((err) => {
           console.warn('Playback error:', err);
+          setIsLoading(false);
         });
       }
+    } else {
+      setIsLoading(false);
     }
 
     if (fullQueue.length < 8) {
@@ -340,7 +388,7 @@ export function useAudioPlayer(initialTracks = []) {
         }
       });
     }
-  }, [ytEngine]);
+  }, [ytEngine, isMuted, volume]);
 
   const lastActionTimeRef = useRef(0);
 
@@ -364,6 +412,7 @@ export function useAudioPlayer(initialTracks = []) {
       setIsPlaying(false);
     } else {
       if (currentTrack?.url) {
+        audio.volume = isMuted ? 0 : volume;
         if (!audio.src || audio.src === window.location.href || !audio.src.endsWith(currentTrack.url.slice(-15))) {
           audio.src = currentTrack.url;
           audio.load();
@@ -382,9 +431,12 @@ export function useAudioPlayer(initialTracks = []) {
               setIsPlaying(false);
             });
         }
+      } else if (currentTrack) {
+        // If current track doesn't have a direct URL, resolve and play full-length song!
+        playDirectTrack(currentTrack, tracks);
       }
     }
-  }, [isPlaying, currentTrack, isCurrentTrackYouTube, ytEngine]);
+  }, [isPlaying, currentTrack, isCurrentTrackYouTube, ytEngine, isMuted, volume, playDirectTrack, tracks]);
 
   const handleNextTrack = useCallback(() => {
     const now = Date.now();
