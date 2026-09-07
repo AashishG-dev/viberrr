@@ -1,8 +1,6 @@
 import React from 'react';
 import { Sliders, Sparkles, Radio, CloudRain, Disc, Waves, RotateCcw } from 'lucide-react';
-import { EQ_FREQUENCIES } from '../hooks/useStudioEqualizer';
 
-// 5 Key Bands corresponding to Stitch UI display
 const STITCH_BANDS = [
   { label: '40 Hz', sub: 'SUB-BASS', index: 0, min: -12, max: 12 },
   { label: '250 Hz', sub: 'WARMTH', index: 3, min: -12, max: 12 },
@@ -11,7 +9,7 @@ const STITCH_BANDS = [
   { label: '16 kHz', sub: 'SILK', index: 9, min: -12, max: 12 }
 ];
 
-export default function AcousticRoom({
+function AcousticRoom({
   bandGains = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   onSetBandGain,
   onResetEq,
@@ -26,56 +24,58 @@ export default function AcousticRoom({
   };
 
   return (
-    <section className="py-14 border-b border-[#343538]/40" id="acoustic-room">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+    <section className="py-16 border-b border-[#2b2f33]/60 relative" id="acoustic-room">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         
-        {/* Section Intro & Philosophy */}
+        {/* Section Intro */}
         <div className="lg:col-span-4 flex flex-col justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1b1b1f] border border-[#343538]/50 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0]" />
-              <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest text-[11px]">
-                DSP CONVOLUTION ENGINE
-              </span>
+            <div className="flex items-center gap-2 mb-2 font-mono text-[10px] tracking-[0.18em] uppercase text-[#cfc6b0]">
+              <span>✦ DSP STAGE</span>
             </div>
-            <h2 className="font-headline-lg text-[#FAF8F5] tracking-tight mb-4">
-              The Acoustic Room
+            <h2 className="display-monument text-2xl sm:text-3xl lg:text-4xl text-[#FAF8F5] mb-3">
+              Acoustic <span className="word-tracer">Matrix</span>
             </h2>
-            <p className="font-body-md text-[#c5c7c1] leading-relaxed mb-6 text-sm">
-              Direct your personal playback stage while the radio streams. Tailor the master audio chain with calibrated analog curves, then layer organic physical textures underneath.
+            <p className="font-mono text-xs text-[#8f918c] mb-6 tracking-wide">
+              Real-time master frequency contouring and analog tape warmth.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0d0e11] border border-[#343538]/50 font-label-telemetry text-[#8f918c] flex items-center gap-3 text-xs shadow-sm">
-            <Sparkles className="w-5 h-5 text-[#cfc6b0] flex-shrink-0" />
-            <span>ZERO LATENCY HARDWARE-ACCELERATED BROWSER CONVOLUTION</span>
+          <div className="p-3 rounded-[10px] bg-[#0d0e11] border border-[#2b2f33] font-mono text-[10px] tracking-[0.14em] text-[#8f918c] flex items-center gap-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse flex-shrink-0" />
+            <span>0ms BROWSER DSP CONVOLUTION</span>
           </div>
         </div>
 
-        {/* DSP Hardware Console */}
-        <div className="lg:col-span-8 p-6 md:p-8 rounded-2xl bg-[#1b1b1f] border border-[#343538]/60 shadow-xl flex flex-col gap-8">
-          
-          {/* 5-Band Equalizer Sliders */}
+        {/* DSP Hardware Console - Stepped Charcoal Frame with Hairline Border */}
+        <div className="lg:col-span-8 p-6 md:p-8 rounded-[16px] bg-[#121316] border border-[#cfc6b0]/20 flex flex-col gap-8 relative">
+          <span className="cad-corner cad-tl" />
+          <span className="cad-corner cad-tr" />
+          <span className="cad-corner cad-bl" />
+          <span className="cad-corner cad-br" />
+
+          {/* 5-Band Equalizer Section */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="font-headline-sm text-[#FAF8F5]">5-Band Analog Tone Contour</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-[#343538] text-[#cfc6b0] font-mono">
-                  STUDER CURVE
+              <div className="flex items-center gap-2 font-mono">
+                <span className="text-xs uppercase tracking-[0.16em] text-[#FAF8F5]">5-BAND ANALOG CONTOUR</span>
+                <span className="text-[9px] px-2 py-0.5 rounded-[4px] bg-[#1b1b1f] text-[#cfc6b0] border border-[#2b2f33] tracking-widest">
+                  CALIBRATED
                 </span>
               </div>
+
               <button
                 onClick={onResetEq}
-                className="font-label-telemetry text-[#8f918c] hover:text-[#FAF8F5] uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer"
+                className="wireframe-btn !py-1 !px-2.5"
                 title="Reset all EQ bands to 0.0 dB"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span>Reset Flat (0.0 dB)</span>
+                <RotateCcw className="w-3 h-3 text-[#cfc6b0]" />
+                <span>RESET FLAT (0.0 dB)</span>
               </button>
             </div>
 
             {/* Faders Grid */}
-            <div className="grid grid-cols-5 gap-3 sm:gap-6 pt-6 pb-3 bg-[#0d0e11] rounded-xl p-4 sm:p-6 border border-[#343538]/50">
+            <div className="grid grid-cols-5 gap-3 sm:gap-6 pt-6 pb-4 bg-[#0d0e11] rounded-[12px] p-4 sm:p-6 border border-[#2b2f33]">
               {STITCH_BANDS.map((band) => {
                 const gain = bandGains[band.index] !== undefined ? bandGains[band.index] : 0;
                 const displayDb = (gain >= 0 ? `+${gain.toFixed(1)}` : gain.toFixed(1)) + ' dB';
@@ -83,23 +83,20 @@ export default function AcousticRoom({
 
                 return (
                   <div key={band.label} className="flex flex-col items-center gap-4">
-                    <span className={`font-label-telemetry font-mono text-xs ${gain !== 0 ? 'text-[#cfc6b0] font-bold' : 'text-[#8f918c]'}`}>
+                    <span className={`font-mono text-[10px] tracking-wider ${gain !== 0 ? 'text-[#00f0ff] font-semibold' : 'text-[#8f918c]'}`}>
                       {displayDb}
                     </span>
 
                     {/* Vertical slider track */}
-                    <div className="relative w-3 sm:w-4 h-36 bg-[#292a2d] rounded-full flex justify-center items-center group">
-                      {/* Active fill */}
+                    <div className="relative w-2 sm:w-2.5 h-36 bg-[#232529] rounded-full flex justify-center items-center group">
                       <div
                         className="absolute bottom-0 w-full bg-[#cfc6b0] rounded-full transition-all"
                         style={{ height: `${pct}%` }}
                       />
-                      {/* Thumb */}
                       <div
-                        className="absolute w-5 h-5 rounded-full bg-[#FAF8F5] shadow-md transform -translate-y-1/2 pointer-events-none group-hover:scale-110 transition-transform"
-                        style={{ bottom: `calc(${pct}% - 10px)` }}
+                        className="absolute w-4 h-4 rounded-full bg-[#FAF8F5] border border-[#00f0ff] shadow-sm transform -translate-y-1/2 pointer-events-none group-hover:scale-125 transition-transform"
+                        style={{ bottom: `calc(${pct}% - 8px)` }}
                       />
-                      {/* Invisible vertical range input overlay */}
                       <input
                         type="range"
                         min="-12"
@@ -113,11 +110,11 @@ export default function AcousticRoom({
                       />
                     </div>
 
-                    <div className="text-center">
-                      <span className="font-label-telemetry text-[#FAF8F5] block text-xs">
+                    <div className="text-center font-mono">
+                      <span className="text-[#FAF8F5] block text-xs tracking-wider">
                         {band.label}
                       </span>
-                      <span className="text-[10px] text-[#8f918c] uppercase font-mono">
+                      <span className="text-[9px] text-[#8f918c] uppercase tracking-widest block mt-0.5">
                         {band.sub}
                       </span>
                     </div>
@@ -127,83 +124,99 @@ export default function AcousticRoom({
             </div>
           </div>
 
-          {/* Tactile Soundscape Layers (Toggle Bank) */}
+          {/* Tactile Soundscape Layers (Outlined Wireframe Toggle Bank) */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-headline-sm text-[#FAF8F5]">Analog Environmental Texture Layering</span>
-              <span className="font-label-telemetry text-[#8f918c] font-mono uppercase text-xs">
-                REAL-TIME MIX BUS
-              </span>
+            <div className="flex items-center justify-between mb-4 font-mono text-[10px] tracking-[0.16em] uppercase">
+              <span className="text-[#FAF8F5]">PHYSICAL NOISE CONVOLUTION</span>
+              <span className="text-[#8f918c]">4 CHANNELS DOCKED</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
+              
               {/* Toggle 1: Vinyl Surface Crackle */}
-              <label className="flex items-center justify-between p-4 rounded-xl bg-[#0d0e11] border border-[#343538]/50 cursor-pointer hover:bg-[#1f1f23] transition-colors">
+              <div 
+                onClick={() => onToggleEffect('vinyl')}
+                className={`flex items-center justify-between p-3.5 rounded-[10px] border transition-all cursor-pointer ${
+                  activeEffects?.vinyl?.enabled
+                    ? 'bg-[#1b1b1f] border-[#00f0ff] text-[#FAF8F5]'
+                    : 'bg-[#0d0e11] border-[#2b2f33] text-[#8f918c] hover:border-[#cfc6b0]/40'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <Disc className="w-5 h-5 text-[#cfc6b0]" />
+                  <Disc className="w-4 h-4 text-[#cfc6b0]" />
                   <div className="flex flex-col">
-                    <span className="font-body-md text-[#FAF8F5] font-medium text-sm">Vinyl Surface Crackle</span>
-                    <span className="font-label-telemetry text-[#8f918c] uppercase text-[10px]">1968 Columbia Pressing</span>
+                    <span className="text-xs text-[#FAF8F5]">Vinyl Surface Crackle</span>
+                    <span className="text-[9px] text-[#8f918c] tracking-wider uppercase">1968 Optical Pressing</span>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={!!activeEffects?.vinyl?.enabled}
-                  onChange={() => onToggleEffect('vinyl')}
-                  className="w-4 h-4 accent-[#cfc6b0] rounded cursor-pointer"
-                />
-              </label>
+                <div className={`w-3 h-3 rounded-[3px] border ${
+                  activeEffects?.vinyl?.enabled ? 'bg-[#00f0ff] border-[#00f0ff]' : 'border-[#2b2f33]'
+                }`} />
+              </div>
 
               {/* Toggle 2: Procedural Rain */}
-              <label className="flex items-center justify-between p-4 rounded-xl bg-[#0d0e11] border border-[#343538]/50 cursor-pointer hover:bg-[#1f1f23] transition-colors">
+              <div 
+                onClick={() => onToggleEffect('rain')}
+                className={`flex items-center justify-between p-3.5 rounded-[10px] border transition-all cursor-pointer ${
+                  activeEffects?.rain?.enabled
+                    ? 'bg-[#1b1b1f] border-[#00f0ff] text-[#FAF8F5]'
+                    : 'bg-[#0d0e11] border-[#2b2f33] text-[#8f918c] hover:border-[#cfc6b0]/40'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <CloudRain className="w-5 h-5 text-[#cfc6b0]" />
+                  <CloudRain className="w-4 h-4 text-[#cfc6b0]" />
                   <div className="flex flex-col">
-                    <span className="font-body-md text-[#FAF8F5] font-medium text-sm">Procedural Rain</span>
-                    <span className="font-label-telemetry text-[#8f918c] uppercase text-[10px]">432Hz Binaural Roof Drift</span>
+                    <span className="text-xs text-[#FAF8F5]">Procedural Rain</span>
+                    <span className="text-[9px] text-[#8f918c] tracking-wider uppercase">432Hz Binaural Roof</span>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={!!activeEffects?.rain?.enabled}
-                  onChange={() => onToggleEffect('rain')}
-                  className="w-4 h-4 accent-[#cfc6b0] rounded cursor-pointer"
-                />
-              </label>
+                <div className={`w-3 h-3 rounded-[3px] border ${
+                  activeEffects?.rain?.enabled ? 'bg-[#00f0ff] border-[#00f0ff]' : 'border-[#2b2f33]'
+                }`} />
+              </div>
 
               {/* Toggle 3: Studer Tape Hiss */}
-              <label className="flex items-center justify-between p-4 rounded-xl bg-[#0d0e11] border border-[#343538]/50 cursor-pointer hover:bg-[#1f1f23] transition-colors">
+              <div 
+                onClick={() => onToggleEffect('wind')}
+                className={`flex items-center justify-between p-3.5 rounded-[10px] border transition-all cursor-pointer ${
+                  activeEffects?.wind?.enabled
+                    ? 'bg-[#1b1b1f] border-[#00f0ff] text-[#FAF8F5]'
+                    : 'bg-[#0d0e11] border-[#2b2f33] text-[#8f918c] hover:border-[#cfc6b0]/40'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <Waves className="w-5 h-5 text-[#cfc6b0]" />
+                  <Waves className="w-4 h-4 text-[#cfc6b0]" />
                   <div className="flex flex-col">
-                    <span className="font-body-md text-[#FAF8F5] font-medium text-sm">Subtle Tape Hiss</span>
-                    <span className="font-label-telemetry text-[#8f918c] uppercase text-[10px]">Studer A80 1/4" Reel</span>
+                    <span className="text-xs text-[#FAF8F5]">Studer Tape Hiss</span>
+                    <span className="text-[9px] text-[#8f918c] tracking-wider uppercase">Studer A80 1/4" Reel</span>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={!!activeEffects?.wind?.enabled}
-                  onChange={() => onToggleEffect('wind')}
-                  className="w-4 h-4 accent-[#cfc6b0] rounded cursor-pointer"
-                />
-              </label>
+                <div className={`w-3 h-3 rounded-[3px] border ${
+                  activeEffects?.wind?.enabled ? 'bg-[#00f0ff] border-[#00f0ff]' : 'border-[#2b2f33]'
+                }`} />
+              </div>
 
-              {/* Toggle 4: Mullard Tube Saturation */}
-              <label className="flex items-center justify-between p-4 rounded-xl bg-[#0d0e11] border border-[#343538]/50 cursor-pointer hover:bg-[#1f1f23] transition-colors">
+              {/* Toggle 4: Warm Tube Saturation */}
+              <div 
+                onClick={() => onToggleEffect('binaural')}
+                className={`flex items-center justify-between p-3.5 rounded-[10px] border transition-all cursor-pointer ${
+                  activeEffects?.binaural?.enabled
+                    ? 'bg-[#1b1b1f] border-[#00f0ff] text-[#FAF8F5]'
+                    : 'bg-[#0d0e11] border-[#2b2f33] text-[#8f918c] hover:border-[#cfc6b0]/40'
+                }`}
+              >
                 <div className="flex items-center gap-3">
-                  <Radio className="w-5 h-5 text-[#cfc6b0]" />
+                  <Radio className="w-4 h-4 text-[#cfc6b0]" />
                   <div className="flex flex-col">
-                    <span className="font-body-md text-[#FAF8F5] font-medium text-sm">Warm Tube Saturation</span>
-                    <span className="font-label-telemetry text-[#8f918c] uppercase text-[10px]">Mullard 12AX7 Class-A Stage</span>
+                    <span className="text-xs text-[#FAF8F5]">Tube Saturation</span>
+                    <span className="text-[9px] text-[#8f918c] tracking-wider uppercase">Class-A Triode Stage</span>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={!!activeEffects?.binaural?.enabled}
-                  onChange={() => onToggleEffect('binaural')}
-                  className="w-4 h-4 accent-[#cfc6b0] rounded cursor-pointer"
-                />
-              </label>
+                <div className={`w-3 h-3 rounded-[3px] border ${
+                  activeEffects?.binaural?.enabled ? 'bg-[#00f0ff] border-[#00f0ff]' : 'border-[#2b2f33]'
+                }`} />
+              </div>
+
             </div>
           </div>
 
@@ -212,3 +225,7 @@ export default function AcousticRoom({
     </section>
   );
 }
+
+export default React.memo(AcousticRoom);
+
+

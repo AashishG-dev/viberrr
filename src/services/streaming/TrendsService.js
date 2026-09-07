@@ -48,9 +48,9 @@ const FALLBACK_TRENDS = [
     duration: 215,
     thumbnail: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&q=80',
     source: 'youtube',
-    sourceLabel: 'Spotify Viral 50',
+    sourceLabel: 'NEURAL RADAR // 24-BIT',
     streams: '210M',
-    badge: '👑 Viral Hit',
+    badge: '👑 Master Cut',
     isYouTubeEngine: true
   },
   {
@@ -63,7 +63,7 @@ const FALLBACK_TRENDS = [
     duration: 142,
     thumbnail: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&q=80',
     source: 'youtube',
-    sourceLabel: 'YouTube Trending',
+    sourceLabel: 'SOVEREIGN AIRPLAY',
     streams: '95M',
     badge: '🏎️ Speed Phonk',
     isYouTubeEngine: true
@@ -151,10 +151,10 @@ class TrendsService {
 
     if (category === 'spotify') {
       categorySearchTerm = 'spotify viral 50 hits 2026';
-      badgeTag = '🎧 Spotify Top';
+      badgeTag = '⚡ Neural Radar';
     } else if (category === 'youtube') {
       categorySearchTerm = 'trending music videos 2026';
-      badgeTag = '📺 YouTube Trending';
+      badgeTag = '📡 Sovereign Airplay';
     } else if (category === 'dhh') {
       categorySearchTerm = 'desi hip hop hits seedhe maut krsna divine';
       badgeTag = '🎤 DHH Top';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Headphones, Sparkles, Sliders, ShieldAlert, Radio, 
+  Headphones, Sparkles, Sliders, Radio, 
   Volume2, ArrowRight, Play, CheckCircle2
 } from 'lucide-react';
 
@@ -93,13 +93,7 @@ export default function OnboardingModal({ isOpen, onClose, onStartPlayback }) {
             </div>
           </div>
 
-          {/* 18+ Content & Sponsored Ads Notice */}
-          <div className="mt-4 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
-            <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[10px] sm:text-[11px] font-space text-amber-200/90 leading-tight">
-              <strong className="text-amber-300 font-bold uppercase">Notice / 18+ Content:</strong> This platform is supported by non-intrusive 3rd-party sponsored ads and links. Viewer discretion is advised for sponsored placements.
-            </p>
-          </div>
+
 
           {/* Action Button */}
           <div className="mt-5 flex gap-3">

@@ -1,28 +1,38 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-  Search, Play, Pause, RefreshCw, Flame, Radio, 
-  Sparkles, ExternalLink, ChevronDown, ChevronUp, Music 
+  Search, Play, Pause, RefreshCw, Radio, 
+  Sparkles, ChevronDown, ChevronUp, Activity, Sliders, Heart, Plus
 } from 'lucide-react';
 import { trendsService } from '../services/streaming/TrendsService';
 import { STATIONS } from '../data/stationsData';
+import { useAudio } from '../context/AudioContext';
 
-const TREND_CATEGORIES = [
-  { id: 'all', label: '🔥 Global Top 50', desc: 'Billboard & Global Chart Leaders' },
-  { id: 'spotify', label: '🎧 Spotify Viral', desc: 'Trending on Spotify Daily Viral' },
-  { id: 'youtube', label: '📺 YouTube Trending', desc: 'Most Streamed YouTube Music Videos' },
-  { id: 'dhh', label: '🎤 Desi Hip-Hop', desc: 'Seedhe Maut, KR$NA, DIVINE, Talha Anjum' },
-  { id: 'phonk', label: '🏎️ Drift Phonk', desc: 'Brazilian & Speed Drift B文化的' },
-  { id: 'lofi', label: '☕ Lo-Fi & Chill', desc: 'Midnight Study & Rainy Room' },
-  { id: 'bollywood', label: '✨ Bollywood Hits', desc: 'Evergreen & Modern Bollywood Gold' }
+const BASE_TREND_CATEGORIES = [
+  { id: 'all', code: '01', label: 'ALL', desc: 'Apex & Chart Leaders' },
+  { id: 'vault', code: '★', label: 'MY VAULT', desc: 'Personal Saved Tracks' },
+  { id: 'spotify', code: '02', label: 'RADAR', desc: 'Emerging Spectral Waves' },
+  { id: 'youtube', code: '03', label: 'AIRPLAY', desc: 'Continuous Broadcast Feeds' },
+  { id: 'dhh', code: '04', label: 'UNDERGROUND', desc: 'Subcontinental Raw Tapes' },
+  { id: 'phonk', code: '05', label: 'DRIFT', desc: 'High-Octane Analog Speed' },
+  { id: 'lofi', code: '06', label: 'CHILL', desc: 'Nocturnal Study & Rain' },
+  { id: 'bollywood', code: '07', label: 'VINYL', desc: 'Cinema Master Recordings' }
 ];
 
-export default function SongTrendsSection({
+function SongTrendsSection({
   currentTrack,
   isPlaying,
   onPlayTrack,
   onSelectStation,
   showToast
 }) {
+  const {
+    vaultTracks,
+    isLiked,
+    handleToggleLike,
+    handlePlayNext,
+    vaultCount
+  } = useAudio();
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [trends, setTrends] = useState([]);
@@ -31,21 +41,24 @@ export default function SongTrendsSection({
   const [showStationsArchive, setShowStationsArchive] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
 
-  // Fetch trends from service
   const loadTrends = useCallback(async (category, query, force = false) => {
+    if (category === 'vault') {
+      setIsLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
     setIsLoading(true);
     try {
       const list = await trendsService.fetchTrends(category, query, force);
       setTrends(list || []);
     } catch (e) {
-      console.warn('Failed to load trends:', e);
+      console.warn('Failed to load telemetry trends:', e);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
   }, []);
 
-  // Initial load and category switch
   useEffect(() => {
     const timer = setTimeout(() => {
       loadTrends(activeCategory, searchQuery);
@@ -54,31 +67,50 @@ export default function SongTrendsSection({
     return () => clearTimeout(timer);
   }, [activeCategory, searchQuery, loadTrends]);
 
-  // Handle Refresh Button
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await loadTrends(activeCategory, searchQuery, true);
     if (showToast) {
-      showToast('Trending Songs Refreshed');
+      showToast('Telemetry Radar Synchronized');
     }
   };
 
-  // Handle Surf Next: Jump to next trend track
+  const categories = useMemo(() => {
+    return BASE_TREND_CATEGORIES.map((cat) => {
+      if (cat.id === 'vault') {
+        return { ...cat, label: `MY VAULT (${vaultCount})` };
+      }
+      return cat;
+    });
+  }, [vaultCount]);
+
+  const displayedTracks = useMemo(() => {
+    if (activeCategory === 'vault') {
+      if (!searchQuery.trim()) return vaultTracks;
+      const q = searchQuery.toLowerCase();
+      return vaultTracks.filter(
+        (t) => (t.title && t.title.toLowerCase().includes(q)) || (t.artist && t.artist.toLowerCase().includes(q))
+      );
+    }
+    return trends;
+  }, [activeCategory, vaultTracks, searchQuery, trends]);
+
   const handleSurfNext = () => {
-    if (!trends || trends.length === 0) return;
-    const currentIdx = trends.findIndex((t) => t.title === currentTrack?.title);
-    const nextIdx = (currentIdx + 1) % trends.length;
-    handleTrackClick(trends[nextIdx]);
+    if (displayedTracks && displayedTracks.length > 0) {
+      const randomTrack = displayedTracks[Math.floor(Math.random() * displayedTracks.length)];
+      if (randomTrack && onPlayTrack) {
+        handleTrackClick(randomTrack);
+      }
+    }
   };
 
-  // Handle Play Track (100% Full-Length Audio)
   const handleTrackClick = (track) => {
     if (!onPlayTrack) return;
 
     const hasValidYtId = Boolean(track.videoId && /^[a-zA-Z0-9_-]{11}$/.test(track.videoId));
     const playable = {
       ...track,
-      id: track.id || `trend_${Date.now()}`,
+      id: track.id || `radar_${Date.now()}`,
       title: track.title,
       artist: track.artist,
       thumbnail: track.thumbnail,
@@ -89,230 +121,258 @@ export default function SongTrendsSection({
       isFullTrack: true
     };
 
-    onPlayTrack(playable, trends);
+    onPlayTrack(playable, displayedTracks);
     if (showToast) {
-      showToast(`Now Playing: ${track.title}`);
+      showToast(`Transmitting: ${track.title}`);
     }
   };
 
   return (
-    <section className="py-12 border-b border-[#343538]/40" id="frequency-directory">
-      {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+    <section className="py-12 sm:py-16 border-b border-[#2b2f33]/60 relative" id="frequency-directory">
+      
+      {/* Editorial Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1b1b1f] border border-[#343538]/50 mb-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
-            <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest text-[10px]">
-              LIVE MUSIC TRENDS // REAL-TIME DISCOVERY
-            </span>
+          <div className="flex items-center gap-2 mb-2 font-mono text-[10px] tracking-[0.18em] uppercase text-[#cfc6b0]">
+            <span>✦ RADAR ARCHIVE</span>
           </div>
-          <h2 className="font-headline-lg text-[#FAF8F5] tracking-tight">
-            Song Trends & Global Hits
+          <h2 className="display-monument text-2xl sm:text-3xl lg:text-4xl text-[#FAF8F5]">
+            Radar & <span className="word-tracer">Archive</span>
           </h2>
-          <p className="font-body-md text-[#c5c7c1] text-xs sm:text-sm mt-1 max-w-xl leading-relaxed">
-            Real-time trending music aggregated from Spotify Charts, YouTube Music, and Global Viral Tracklists. Stream lossless audio with zero friction.
+          <p className="font-mono text-xs text-[#8f918c] mt-1.5 tracking-wide">
+            Curated live feeds and master recordings.
           </p>
         </div>
 
-        {/* Header Actions: Surf Next, Refresh Button & View Toggle */}
+        {/* Action Controls: Surf Next, Cards/List View, Refresh */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Quick Surf Next */}
           <button
             onClick={handleSurfNext}
-            className="px-3.5 py-2 rounded-full bg-[#292a2d] hover:bg-[#343538] text-[#FAF8F5] border border-[#343538]/70 font-label-pill text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-            title="Surf to Next Trending Track"
+            className="wireframe-btn !px-3 !py-1.5"
+            title="Surf to Next Radar Track"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#cfc6b0]" />
-            <span className="hidden sm:inline">SURF NEXT</span>
+            <Sparkles className="w-3 h-3 text-[#cfc6b0]" />
+            <span>SURF</span>
           </button>
 
           {/* View Mode Toggle: Grid vs List */}
-          <div className="flex items-center p-1 rounded-full bg-[#1b1b1f] border border-[#343538]/70">
+          <div className="flex items-center p-0.5 rounded-[8px] border border-[#2b2f33] bg-[#0d0e11]">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-1 rounded-full text-xs font-mono uppercase transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-[6px] text-[10px] font-mono uppercase tracking-[0.14em] transition-all cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-[#FAF8F5] text-[#121316] font-bold shadow-xs'
+                  ? 'bg-[#232529] text-[#FAF8F5] font-semibold border border-[#cfc6b0]/30'
                   : 'text-[#8f918c] hover:text-[#FAF8F5]'
               }`}
-              title="Card Grid View"
             >
-              CARDS
+              MATRIX
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-1 rounded-full text-xs font-mono uppercase transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-[6px] text-[10px] font-mono uppercase tracking-[0.14em] transition-all cursor-pointer ${
                 viewMode === 'list'
-                  ? 'bg-[#FAF8F5] text-[#121316] font-bold shadow-xs'
+                  ? 'bg-[#232529] text-[#FAF8F5] font-semibold border border-[#cfc6b0]/30'
                   : 'text-[#8f918c] hover:text-[#FAF8F5]'
               }`}
-              title="Dense Surf Stream View"
             >
-              SURF LIST
+              INDEX
             </button>
           </div>
 
-          {/* Refresh Trends Button */}
+          {/* Refresh Button */}
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="px-4 py-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#FAF8F5] border border-[#343538]/70 font-label-pill text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
-            title="Refresh Latest Trends"
+            className="wireframe-btn !px-2.5 !py-1.5"
+            title="Synchronize Live Stream"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#cfc6b0] ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{isRefreshing ? 'REFRESHING...' : 'REFRESH TRENDS'}</span>
+            <RefreshCw className={`w-3 h-3 text-[#cfc6b0] ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isRefreshing ? 'SYNC...' : 'SYNC'}</span>
           </button>
         </div>
       </div>
 
-      {/* Internal Search Bar */}
+      {/* Search Input */}
       <div className="relative mb-6">
-        <div className="relative flex items-center p-1.5 rounded-xl bg-[#0d0e11]/90 border border-[#343538]/60 shadow-lg focus-within:border-[#cfc6b0]/70 transition-all">
-          <div className="flex items-center gap-2 flex-1 px-3 py-1.5">
-            <Search className="w-4 h-4 text-[#8f918c] flex-shrink-0" />
+        <div className="relative flex items-center p-1 rounded-[10px] bg-[#0d0e11] border border-[#2b2f33] focus-within:border-[#cfc6b0]/50 transition-colors">
+          <div className="flex items-center gap-3 flex-1 px-3 py-1.5">
+            <Search className="w-3.5 h-3.5 text-[#8f918c] flex-shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search trending songs, artists, YouTube & Spotify tracks..."
-              className="w-full bg-transparent border-none text-[#FAF8F5] placeholder-[#8f918c] text-xs sm:text-sm focus:outline-none font-body-md"
+              placeholder="Search tracks or channels..."
+              className="w-full bg-transparent border-none text-[#FAF8F5] placeholder-[#8f918c] text-xs focus:outline-none font-mono"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="text-[11px] font-mono text-[#8f918c] hover:text-[#FAF8F5] cursor-pointer px-2"
+                className="text-[10px] font-mono text-[#8f918c] hover:text-[#FAF8F5] cursor-pointer px-2"
               >
-                CLEAR
+                RESET
               </button>
             )}
           </div>
-          <div className="hidden sm:flex items-center gap-2 px-3 border-l border-[#343538]/50">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1f1f23] text-[#cfc6b0] border border-[#343538]/60">
-              SPOTIFY + YOUTUBE
+          <div className="hidden sm:flex items-center gap-2 px-3 border-l border-[#2b2f33]">
+            <span className="text-[9px] font-mono px-2 py-0.5 rounded-[4px] bg-[#1b1b1f] text-[#cfc6b0] border border-[#2b2f33] uppercase tracking-[0.14em]">
+              LOSSLESS CARRIERS
             </span>
           </div>
         </div>
       </div>
 
-      {/* Trend Category Pills */}
+      {/* Monospaced Category Selector Badges */}
       <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-none">
-        {TREND_CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const isActive = activeCategory === cat.id;
           return (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-full font-label-pill uppercase tracking-wider transition-all flex items-center gap-2 flex-shrink-0 cursor-pointer text-xs ${
+              className={`px-3.5 py-1.5 rounded-[8px] font-mono text-[10px] uppercase tracking-[0.16em] transition-all flex items-center gap-2 flex-shrink-0 cursor-pointer border ${
                 isActive
-                  ? 'bg-[#FAF8F5] text-[#121316] font-bold shadow-md'
-                  : 'bg-[#1b1b1f] hover:bg-[#292a2d] text-[#c5c7c1] hover:text-[#FAF8F5] border border-[#343538]/50'
+                  ? 'bg-[#232529] text-[#FAF8F5] border-[#cfc6b0]/60 font-semibold shadow-sm'
+                  : 'bg-[#121316] hover:bg-[#1b1b1f] text-[#8f918c] hover:text-[#FAF8F5] border-[#2b2f33]'
               }`}
             >
+              <span className="text-[#cfc6b0]/60">{cat.code}</span>
               <span>{cat.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Loading Skeleton / State */}
+      {/* Loading Skeleton */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 py-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="p-4 rounded-2xl bg-[#1b1b1f] border border-[#343538]/40 animate-pulse flex flex-col gap-3">
-              <div className="aspect-square w-full rounded-xl bg-[#292a2d]" />
-              <div className="h-4 bg-[#292a2d] rounded w-3/4" />
-              <div className="h-3 bg-[#292a2d] rounded w-1/2" />
+            <div key={i} className="p-5 rounded-[16px] bg-[#121316] border border-[#2b2f33] animate-pulse flex flex-col gap-3">
+              <div className="aspect-square w-full rounded-[10px] bg-[#1b1b1f]" />
+              <div className="h-4 bg-[#1b1b1f] rounded w-3/4" />
+              <div className="h-3 bg-[#1b1b1f] rounded w-1/2" />
             </div>
           ))}
         </div>
       )}
 
-      {/* Live Trends Cards Grid or Dense Surf List */}
-      {!isLoading && viewMode === 'grid' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="trendTracksGrid">
-          {trends.map((item, idx) => {
+      {/* Empty State for Vault or Search */}
+      {!isLoading && displayedTracks.length === 0 && (
+        <div className="py-16 px-6 text-center font-mono border border-dashed border-[#2b2f33] rounded-[16px] bg-[#121316]/50 max-w-2xl mx-auto my-6">
+          {activeCategory === 'vault' ? (
+            <>
+              <Heart className="w-8 h-8 text-[#8f918c] mx-auto mb-3 opacity-40" />
+              <h4 className="text-sm font-space text-[#FAF8F5] mb-1">Your Personal Vault is Empty</h4>
+              <p className="text-xs text-[#8f918c] max-w-sm mx-auto leading-relaxed">
+                Click the <Heart className="w-3 h-3 inline text-[#cfc6b0] mx-0.5" /> icon on any track or in the Master Deck to store your personal favorites locally without accounts.
+              </p>
+            </>
+          ) : (
+            <>
+              <Search className="w-8 h-8 text-[#8f918c] mx-auto mb-3 opacity-40" />
+              <h4 className="text-sm font-space text-[#FAF8F5] mb-1">No Frequency Nodes Discovered</h4>
+              <p className="text-xs text-[#8f918c]">Try adjusting your search query or refreshing the radar.</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Matrix Cards View (Atlantic.vc 3/4 Column Wireframe Grid) */}
+      {!isLoading && viewMode === 'grid' && displayedTracks.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="trendTracksGrid">
+          {displayedTracks.map((item, idx) => {
             const isCurrentlyPlaying = currentTrack?.title === item.title && isPlaying;
+            const liked = isLiked(item.id || item.title);
             return (
               <article
                 key={item.id || idx}
                 onClick={() => handleTrackClick(item)}
-                className={`group flex flex-col justify-between p-4 rounded-2xl bg-[#1b1b1f] hover:bg-[#1f1f23] border transition-all shadow-md cursor-pointer relative ${
+                className={`group flex flex-col justify-between p-5 rounded-[16px] bg-[#121316] hover:bg-[#1b1b1f] border transition-all duration-200 cursor-pointer relative ${
                   isCurrentlyPlaying
-                    ? 'border-[#cfc6b0] shadow-[0_0_24px_rgba(207,198,176,0.2)]'
-                    : 'border-[#343538]/50 hover:border-[#cfc6b0]/50'
+                    ? 'border-[#00f0ff] shadow-[0_0_20px_rgba(0,240,255,0.15)]'
+                    : 'border-[#cfc6b0]/20 hover:border-[#cfc6b0]/50'
                 }`}
               >
-                {/* Ranking & Source Badges */}
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
-                  <span className="w-6 h-6 rounded-full bg-[#0d0e11]/90 backdrop-blur-md text-[#FAF8F5] font-mono text-xs font-bold flex items-center justify-center border border-white/10 shadow-sm">
-                    #{idx + 1}
-                  </span>
-                  {item.source === 'spotify' ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#1db954]/20 border border-[#1db954]/40 text-[#1db954] font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                      SPOTIFY
-                    </span>
-                  ) : item.source === 'youtube' ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#ff0000]/20 border border-[#ff0000]/40 text-[#ff4444] font-mono text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                      YOUTUBE
-                    </span>
-                  ) : null}
+                {/* CAD Telemetry Tag */}
+                <div className="flex items-center justify-between mb-3 text-[9px] font-mono tracking-[0.16em] uppercase text-[#8f918c]">
+                  <span className="text-[#cfc6b0]">#{String(idx + 1).padStart(2, '0')} // NODE</span>
+                  <span className="text-[#00f0ff]">FLAC 24-BIT</span>
                 </div>
 
-                {/* Badge (Top #1, Viral, etc.) */}
-                {item.badge && (
-                  <div className="absolute top-3 right-3 z-10 px-2 py-0.5 rounded-full bg-[#0d0e11]/85 backdrop-blur-md text-[#cfc6b0] font-mono text-[9px] uppercase border border-white/10">
-                    {item.badge}
-                  </div>
-                )}
-
                 <div>
-                  {/* Artwork Plate */}
-                  <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3.5 bg-[#0d0e11]">
+                  {/* Artwork Preview Frame with Hairline Border */}
+                  <div className="relative aspect-square w-full rounded-[10px] overflow-hidden mb-4 bg-[#0d0e11] border border-white/5">
                     <img
                       src={item.thumbnail}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80';
                       }}
                     />
 
-                    {/* Hover Quick Play Overlay */}
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-[#FAF8F5] text-[#121316] flex items-center justify-center shadow-2xl transform scale-90 group-hover:scale-100 transition-transform">
+                    {/* Quick Action Buttons on Artwork */}
+                    <div className="absolute inset-0 bg-[#0d0e11]/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      {/* Top-left: Play Next */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePlayNext(item);
+                        }}
+                        className="absolute top-2.5 left-2.5 w-8 h-8 rounded-[6px] border border-white/15 hover:border-[#cfc6b0] bg-[#121316]/90 text-[#8f918c] hover:text-[#FAF8F5] flex items-center justify-center transition-all cursor-pointer shadow-md"
+                        title="Play Next in Queue"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Top-right: Like / Vault */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleLike(item);
+                        }}
+                        className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-[6px] border flex items-center justify-center transition-all cursor-pointer shadow-md ${
+                          liked
+                            ? 'bg-[#cfc6b0] text-[#0d0e11] border-[#cfc6b0]'
+                            : 'bg-[#121316]/90 text-[#8f918c] hover:text-[#FAF8F5] border-white/15 hover:border-[#cfc6b0]'
+                        }`}
+                        title={liked ? 'Remove from My Vault' : 'Save to My Vault'}
+                      >
+                        <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current' : ''}`} />
+                      </button>
+
+                      {/* Center: Play / Pause */}
+                      <div className="w-11 h-11 rounded-[8px] border border-[#cfc6b0] bg-[#121316] text-[#FAF8F5] flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
                         {isCurrentlyPlaying ? (
-                          <Pause className="w-5 h-5 fill-current" />
+                          <Pause className="w-4 h-4 fill-current text-[#00f0ff]" />
                         ) : (
-                          <Play className="w-5 h-5 fill-current ml-0.5" />
+                          <Play className="w-4 h-4 fill-current ml-0.5 text-[#cfc6b0]" />
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Track Titles */}
-                  <h3 className="font-headline-sm text-sm text-[#FAF8F5] leading-snug line-clamp-1 group-hover:text-[#cfc6b0] transition-colors mb-1">
+                  <h3 className="font-space text-sm text-[#FAF8F5] font-normal leading-snug line-clamp-1 group-hover:text-[#cfc6b0] transition-colors mb-1">
                     {item.title}
                   </h3>
 
-                  <p className="font-body-sm text-xs text-[#c5c7c1] line-clamp-1 mb-2">
+                  <p className="font-mono text-xs text-[#8f918c] line-clamp-1 mb-3">
                     {item.artist}
                   </p>
                 </div>
 
-                {/* Card Footer */}
-                <div className="pt-3 border-t border-[#343538]/40 flex items-center justify-between text-xs">
-                  <div className="flex flex-col">
-                    <span className="font-mono text-[10px] text-[#8f918c]">
-                      {item.streams || 'Lossless Stream'}
-                    </span>
-                  </div>
+                {/* Card Footer with Outlined Action Trigger */}
+                <div className="pt-3 border-t border-[#2b2f33] flex items-center justify-between font-mono text-[10px]">
+                  <span className="text-[#8f918c] tracking-wider">
+                    {item.streams ? item.streams.replace(/views|streams/i, 'DISPATCHES') : '1411 KBPS'}
+                  </span>
 
-                  <span className={`px-2.5 py-1 rounded-full font-label-pill uppercase text-[10px] transition-colors flex items-center gap-1 ${
+                  <span className={`px-2.5 py-1 rounded-[6px] border text-[9px] uppercase tracking-[0.14em] transition-all ${
                     isCurrentlyPlaying
-                      ? 'bg-[#cfc6b0] text-[#121316] font-bold'
-                      : 'bg-[#292a2d] text-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316]'
+                      ? 'border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/10'
+                      : 'border-[#cfc6b0]/30 text-[#FAF8F5] group-hover:border-[#cfc6b0] group-hover:text-[#cfc6b0]'
                   }`}>
-                    {isCurrentlyPlaying ? 'PLAYING' : 'PLAY'}
+                    {isCurrentlyPlaying ? 'TRANSMITTING' : 'INITIALIZE'}
                   </span>
                 </div>
               </article>
@@ -321,66 +381,75 @@ export default function SongTrendsSection({
         </div>
       )}
 
-      {/* Dense Surf List View (Rapid Surfing) */}
-      {!isLoading && viewMode === 'list' && (
-        <div className="space-y-2" id="trendTracksList">
-          {trends.map((item, idx) => {
+      {/* Index List View */}
+      {!isLoading && viewMode === 'list' && displayedTracks.length > 0 && (
+        <div className="space-y-2 font-mono" id="trendTracksList">
+          {displayedTracks.map((item, idx) => {
             const isCurrentlyPlaying = currentTrack?.title === item.title && isPlaying;
+            const liked = isLiked(item.id || item.title);
             return (
               <div
                 key={item.id || idx}
                 onClick={() => handleTrackClick(item)}
-                className={`group flex items-center justify-between p-3 sm:p-4 rounded-xl bg-[#1b1b1f] hover:bg-[#25252a] border transition-all cursor-pointer ${
+                className={`group flex items-center justify-between p-3 rounded-[10px] bg-[#121316] hover:bg-[#1b1b1f] border transition-all cursor-pointer ${
                   isCurrentlyPlaying
-                    ? 'border-[#cfc6b0] shadow-md bg-[#25252a]'
-                    : 'border-[#343538]/50 hover:border-[#cfc6b0]/50'
+                    ? 'border-[#00f0ff] bg-[#1b1b1f]'
+                    : 'border-[#2b2f33] hover:border-[#cfc6b0]/40'
                 }`}
               >
-                {/* Left: Rank, Art, Info */}
-                <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  <span className="font-mono text-xs text-[#8f918c] w-6 text-center flex-shrink-0 font-bold">
-                    #{idx + 1}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span className="text-xs text-[#cfc6b0] w-7 text-center flex-shrink-0">
+                    #{String(idx + 1).padStart(2, '0')}
                   </span>
 
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#0d0e11] flex-shrink-0 border border-white/5">
+                  <div className="relative w-10 h-10 rounded-[6px] overflow-hidden bg-[#0d0e11] flex-shrink-0 border border-white/5">
                     <img
                       src={item.thumbnail}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {isCurrentlyPlaying ? (
-                        <Pause className="w-4 h-4 text-[#FAF8F5] fill-current" />
-                      ) : (
-                        <Play className="w-4 h-4 text-[#FAF8F5] fill-current ml-0.5" />
-                      )}
-                    </div>
                   </div>
 
                   <div className="truncate flex-1 min-w-0">
-                    <h3 className="font-headline-sm text-sm text-[#FAF8F5] truncate group-hover:text-[#cfc6b0] transition-colors">
+                    <h3 className="font-space text-xs text-[#FAF8F5] truncate group-hover:text-[#cfc6b0] transition-colors">
                       {item.title}
                     </h3>
-                    <p className="font-body-sm text-xs text-[#c5c7c1] truncate">
+                    <p className="text-[11px] text-[#8f918c] truncate">
                       {item.artist}
                     </p>
                   </div>
                 </div>
 
-                {/* Right: Badges, Telemetry & Play Button */}
-                <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                  {item.source === 'spotify' ? (
-                    <span className="hidden sm:inline px-2 py-0.5 rounded-full bg-[#1db954]/20 border border-[#1db954]/40 text-[#1db954] font-mono text-[9px] font-bold uppercase">
-                      SPOTIFY
-                    </span>
-                  ) : item.source === 'youtube' ? (
-                    <span className="hidden sm:inline px-2 py-0.5 rounded-full bg-[#ff0000]/20 border border-[#ff0000]/40 text-[#ff4444] font-mono text-[9px] font-bold uppercase">
-                      YOUTUBE
-                    </span>
-                  ) : null}
+                <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-3 text-[10px]">
+                  {/* Quick Vault & Play Next buttons in List View */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleLike(item);
+                    }}
+                    className={`p-1.5 rounded-[6px] border transition-all cursor-pointer ${
+                      liked
+                        ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/15'
+                        : 'border-[#2b2f33] text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40 bg-transparent'
+                    }`}
+                    title={liked ? 'Saved in Vault' : 'Save to Vault'}
+                  >
+                    <Heart className={`w-3 h-3 ${liked ? 'fill-current' : ''}`} />
+                  </button>
 
-                  <span className="hidden md:inline font-mono text-xs text-[#8f918c]">
-                    {item.streams}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayNext(item);
+                    }}
+                    className="p-1.5 rounded-[6px] border border-[#2b2f33] text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40 bg-transparent transition-all cursor-pointer"
+                    title="Play Next in Queue"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+
+                  <span className="hidden md:inline text-[#8f918c]">
+                    FLAC 24-BIT
                   </span>
 
                   <button
@@ -388,23 +457,13 @@ export default function SongTrendsSection({
                       e.stopPropagation();
                       handleTrackClick(item);
                     }}
-                    className={`px-3 py-1.5 rounded-full font-label-pill text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-[6px] border uppercase tracking-[0.14em] transition-all cursor-pointer ${
                       isCurrentlyPlaying
-                        ? 'bg-[#cfc6b0] text-[#121316] font-bold'
-                        : 'bg-[#292a2d] text-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316]'
+                        ? 'border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/10'
+                        : 'border-[#cfc6b0]/30 text-[#FAF8F5] group-hover:border-[#cfc6b0] group-hover:text-[#cfc6b0]'
                     }`}
                   >
-                    {isCurrentlyPlaying ? (
-                      <>
-                        <Pause className="w-3 h-3 fill-current" />
-                        <span>PLAYING</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3 h-3 fill-current ml-0.5" />
-                        <span>SURF</span>
-                      </>
-                    )}
+                    {isCurrentlyPlaying ? 'PLAYING' : 'STREAM'}
                   </button>
                 </div>
               </div>
@@ -413,31 +472,15 @@ export default function SongTrendsSection({
         </div>
       )}
 
-      {/* Empty Search State */}
-      {!isLoading && trends.length === 0 && (
-        <div className="p-12 text-center rounded-2xl bg-[#1b1b1f] border border-[#343538]/40">
-          <p className="font-body-md text-[#FAF8F5] mb-2">No trending tracks found for "{searchQuery}"</p>
-          <button
-            onClick={() => {
-              setSearchQuery('');
-              setActiveCategory('all');
-            }}
-            className="px-4 py-2 rounded-full bg-[#FAF8F5] text-[#121316] text-xs font-bold cursor-pointer"
-          >
-            Reset Search
-          </button>
-        </div>
-      )}
-
       {/* Toggle Native 28 Viberr Archive Stations */}
-      <div className="mt-12 flex flex-col items-center">
+      <div className="mt-14 flex flex-col items-center">
         <button
           onClick={() => setShowStationsArchive((prev) => !prev)}
-          className="px-6 py-2.5 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] border border-[#343538]/70 text-[#FAF8F5] font-label-pill text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-md"
+          className="wireframe-btn !py-2.5 !px-6"
         >
           <Radio className="w-3.5 h-3.5 text-[#cfc6b0]" />
-          <span>{showStationsArchive ? 'Hide Native Radio Stations' : `Browse All ${STATIONS.length} Native Radio Stations`}</span>
-          {showStationsArchive ? <ChevronUp className="w-4 h-4 text-[#cfc6b0]" /> : <ChevronDown className="w-4 h-4 text-[#cfc6b0]" />}
+          <span>{showStationsArchive ? 'CONCEAL ARCHIVAL STATIONS' : `EXPAND ALL ${STATIONS.length} SOVEREIGN CARRIERS`}</span>
+          {showStationsArchive ? <ChevronUp className="w-3.5 h-3.5 text-[#cfc6b0]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#cfc6b0]" />}
         </button>
 
         {showStationsArchive && (
@@ -446,24 +489,24 @@ export default function SongTrendsSection({
               <div
                 key={station.id}
                 onClick={() => onSelectStation && onSelectStation(station)}
-                className="p-3 rounded-xl bg-[#1b1b1f]/80 hover:bg-[#292a2d] border border-[#343538]/40 hover:border-[#cfc6b0]/40 transition-all cursor-pointer flex flex-col gap-2"
+                className="p-3 rounded-[12px] bg-[#121316] hover:bg-[#1b1b1f] border border-[#2b2f33] hover:border-[#cfc6b0]/50 transition-all cursor-pointer flex flex-col gap-2 font-mono"
               >
-                <div className="aspect-square w-full rounded-lg overflow-hidden bg-[#0d0e11] relative">
+                <div className="aspect-square w-full rounded-[8px] overflow-hidden bg-[#0d0e11] relative border border-white/5">
                   <img
                     src={station.desktopBgs?.[0] || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80'}
                     alt={station.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-[#0d0e11]/80 text-[9px] font-mono text-[#cfc6b0]">
-                    #{idx + 1}
+                  <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-[4px] bg-[#0d0e11]/85 text-[8px] font-mono text-[#cfc6b0]">
+                    #{String(idx + 1).padStart(2, '0')}
                   </div>
                 </div>
                 <div className="truncate">
-                  <span className="font-headline-sm text-xs text-[#FAF8F5] block truncate">
+                  <span className="font-space text-xs text-[#FAF8F5] block truncate font-normal">
                     {station.name}
                   </span>
-                  <span className="text-[10px] font-mono text-[#8f918c] truncate block">
-                    {station.songs?.length || 0} Tracks • FLAC
+                  <span className="text-[9px] text-[#8f918c] truncate block mt-0.5">
+                    {station.songs?.length || 0} TRACKS // FLAC
                   </span>
                 </div>
               </div>
@@ -474,3 +517,6 @@ export default function SongTrendsSection({
     </section>
   );
 }
+
+export default React.memo(SongTrendsSection);
+

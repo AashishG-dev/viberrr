@@ -17,7 +17,9 @@ import GlobalSearchModal from './components/GlobalSearchModal';
 import PluginsModal from './components/PluginsModal';
 import RightQueueSidebar from './components/RightQueueSidebar';
 import Toast from './components/Toast';
-import { ShieldAlert, Loader2 } from 'lucide-react';
+import ErrorBoundary from './components/ErrorBoundary';
+import SecurityThreatModal from './components/SecurityThreatModal';
+import { Loader2 } from 'lucide-react';
 
 // Code-split multi-page routes for peak performance
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -26,6 +28,7 @@ const PluginsPage = lazy(() => import('./pages/PluginsPage'));
 const LibraryPage = lazy(() => import('./pages/LibraryPage'));
 const EqualizerPage = lazy(() => import('./pages/EqualizerPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function AppContent() {
   const [isQueueSidebarOpen, setIsQueueSidebarOpen] = useState(false);
@@ -88,7 +91,6 @@ function AppContent() {
     toggleMute,
     toggleShuffle,
     playDirectTrack,
-    frequencies,
     onlineCount,
     handleSelectStation,
     handleSelectAudioSource,
@@ -278,8 +280,8 @@ function AppContent() {
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/equalizer" element={<EqualizerPage />} />
             <Route path="/about" element={<AboutPage />} />
-            {/* Fallback to Home */}
-            <Route path="*" element={<HomePage />} />
+            {/* Dedicated 404 Error Page */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </div>
@@ -303,7 +305,6 @@ function AppContent() {
         onOpenAmbientFx={() => setIsAmbientOpen(true)}
         onShareStation={handleShareStation}
         currentAudioSource={currentAudioSource}
-        frequencies={frequencies}
         isMinimalMode={isMinimalMode}
         onToggleMinimalMode={handleToggleMinimalMode}
         onOpenFloatingMiniPlayer={handleOpenPip}
@@ -397,18 +398,8 @@ function AppContent() {
         }}
       />
 
-      {/* Bottom Corner 18+ & Sponsored Ads Notice Badge */}
-      {!isFullscreen && !isMinimalMode && (
-        <button
-          onClick={() => setIsOnboardingOpen(true)}
-          className="fixed bottom-3 left-3 z-30 pointer-events-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/10 hover:border-amber-400/40 text-[10px] font-mono text-white/50 hover:text-white transition-all cursor-pointer shadow-lg group"
-          title="18+ Disclaimer & Sponsored Content Notice"
-          aria-label="18+ & Sponsored Ads Disclaimer"
-        >
-          <ShieldAlert className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
-          <span className="tracking-tight">18+ / Sponsored Ads</span>
-        </button>
-      )}
+      {/* Security Threat Interception Modal */}
+      <SecurityThreatModal />
 
       {/* Action Toast Feedback */}
       <Toast
@@ -421,10 +412,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AudioProvider>
-        <AppContent />
-      </AudioProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AudioProvider>
+          <AppContent />
+        </AudioProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

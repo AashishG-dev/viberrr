@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Settings } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Settings, Radio, Sparkles, Heart, Plus } from 'lucide-react';
 import { formatTime } from '../utils/formatters';
+import { useAudio } from '../context/AudioContext';
 
 export default function MasterListeningDeck({
   currentStation,
@@ -21,7 +22,9 @@ export default function MasterListeningDeck({
   onToggleMute,
   onOpenAudioSource
 }) {
-  // Format progress and buffer
+  const { isLiked, handleToggleLike, spawnRadioFeed } = useAudio();
+  const liked = isLiked(currentTrack?.id || currentTrack?.title);
+
   const progressPct = useMemo(() => {
     if (!duration || duration <= 0) return 0;
     return Math.min(100, Math.max(0, (currentTime / duration) * 100));
@@ -32,15 +35,14 @@ export default function MasterListeningDeck({
     return Math.min(100, Math.max(0, (buffered / duration) * 100));
   }, [buffered, duration]);
 
-  // Station channel code & city mapping
   const channelMeta = useMemo(() => {
     const id = (currentStation?.id || '').toLowerCase();
-    if (id.includes('dhh') || id.includes('hip-hop')) return { code: 'CH 01 // DELHI', tag: 'STATION 01 // RAW GULLY TAPE & DESI HIP HOP', reel: 'Ampex 456 Master Tape' };
-    if (id.includes('phonk') || id.includes('drift')) return { code: 'CH 02 // MEMPHIS', tag: 'STATION 02 // NIGHT DRIVE & PHONK ARCHIVE', reel: 'Studer A80 1/4" Reel' };
-    if (id.includes('bollywood') || id.includes('dil-ke-paas')) return { code: 'CH 03 // BOMBAY', tag: 'STATION 03 // RETRO BOLLYWOOD ARCHIVE', reel: '1971 Optical Vinyl Pickup' };
-    if (id.includes('lofi') || id.includes('soft')) return { code: 'CH 04 // KYOTO', tag: 'STATION 04 // KYOTO RAIN & TEA HOUSE', reel: 'Binaural Studer Reel' };
-    if (id.includes('synth') || id.includes('slowed')) return { code: 'CH 05 // BERLIN', tag: 'STATION 05 // CINEMA NOCTURNE & JUNO', reel: 'Roland Juno 106 Master' };
-    return { code: 'CH 06 // SOVEREIGN', tag: 'STATION 06 // LOSSLESS ARCHIVAL FEED', reel: 'Direct Studio Master' };
+    if (id.includes('dhh') || id.includes('hip-hop')) return { code: 'CH 01 // DELHI', tag: 'STATION 01 // UNDERGROUND MASTER ARCHIVE', carrier: 'Lossless 24-Bit Carrier' };
+    if (id.includes('phonk') || id.includes('drift')) return { code: 'CH 02 // MEMPHIS', tag: 'STATION 02 // NIGHT DRIVE & PHONK RADAR', carrier: 'Analog Precision Matrix' };
+    if (id.includes('bollywood') || id.includes('dil-ke-paas')) return { code: 'CH 03 // BOMBAY', tag: 'STATION 03 // ARCHIVAL OPTICAL VINYL', carrier: 'Optical Archival Relay' };
+    if (id.includes('lofi') || id.includes('soft')) return { code: 'CH 04 // KYOTO', tag: 'STATION 04 // BINAURAL TEA HOUSE FEED', carrier: 'Binaural Studer Reel' };
+    if (id.includes('synth') || id.includes('slowed')) return { code: 'CH 05 // BERLIN', tag: 'STATION 05 // CINEMA NOCTURNE MATRIX', carrier: 'Analog Juno 106 Relay' };
+    return { code: 'CH 06 // SOVEREIGN', tag: 'STATION 06 // LOSSLESS ARCHIVAL FEED', carrier: 'Direct Studio Master' };
   }, [currentStation]);
 
   const coverArt = currentTrack?.thumbnail || currentStation?.desktopBgs?.[0] || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80';
@@ -61,179 +63,215 @@ export default function MasterListeningDeck({
     onChangeVolume(newVol);
   };
 
+  // Title rendering with single-word tracer highlight (Atlantic.vc style)
+  const trackTitle = currentTrack?.title || currentStation?.name || 'Sovereign Lossless Stream';
+  const titleWords = trackTitle.split(' ');
+  const firstWord = titleWords[0] || '';
+  const remainingWords = titleWords.slice(1).join(' ');
+
   return (
-    <section className="pt-6 pb-12 border-b border-[#343538]/40" id="live-deck">
-      {/* Live Status Ribbon */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-1">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1b1b1f] border border-[#343538]/50 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-[#cfc6b0] tape-pulse" />
-          <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest">
-            NOW BROADCASTING // PRIMARY DISPATCH
-          </span>
+    <section className="pt-8 pb-16 border-b border-[#2b2f33]/60 relative" id="live-deck">
+      
+      {/* Minimal Top Telemetry Ribbon */}
+      <div className="flex items-center justify-between gap-4 mb-6 pb-2 border-b border-[#2b2f33]/40 font-mono text-[10px] tracking-[0.16em] uppercase">
+        <div className="flex items-center gap-2 text-[#cfc6b0]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
+          <span>LIVE // {channelMeta.code}</span>
         </div>
 
-        <div className="flex items-center gap-3 text-[#8f918c] font-label-telemetry uppercase">
-          <span>BIT DEPTH: <strong className="text-[#FAF8F5] font-mono">24-BIT / 96.0 kHz</strong></span>
-          <span className="hidden md:inline text-[#8f918c]/50">•</span>
-          <span className="hidden md:inline">LATENCY: <strong className="text-[#FAF8F5] font-mono">0.18s SOVEREIGN</strong></span>
-          <span className="text-[#8f918c]/50">•</span>
-          <span>BUFFER: <span className="text-[#cfc6b0]">{duration > 0 ? `${Math.round(bufferPct)}%` : 'PRIMED 100%'}</span></span>
+        <div className="flex items-center gap-3 text-[#8f918c]">
+          <span>24-BIT / 96 kHz</span>
+          <span className="text-[#8f918c]/40 hidden sm:inline">•</span>
+          <span className="hidden sm:inline">{onlineCount?.toLocaleString() || '3,482'} NODES</span>
         </div>
       </div>
 
-      {/* Master Direct Player Deck Stage */}
-      <div className="relative w-full rounded-2xl bg-[#1b1b1f]/95 border border-[#343538]/60 p-6 md:p-8 lg:p-10 shadow-2xl backdrop-blur-md">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+      {/* Wireframe Deck Container */}
+      <div className="relative w-full rounded-[16px] bg-[#121316]/95 border border-[#cfc6b0]/20 p-5 sm:p-8 lg:p-10 transition-all duration-300 hover:border-[#cfc6b0]/35 backdrop-blur-md">
+        
+        {/* CAD Corner Crosshairs */}
+        <span className="cad-corner cad-tl" />
+        <span className="cad-corner cad-tr" />
+        <span className="cad-corner cad-bl" />
+        <span className="cad-corner cad-br" />
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
           
-          {/* Left: Curated Station Sleeved Cover */}
+          {/* Left: Viewport Frame */}
           <div className="lg:col-span-5 flex flex-col items-center lg:items-start">
-            <div className="relative aspect-square w-full max-w-[360px] rounded-xl overflow-hidden bg-[#0d0e11] border border-[#343538]/70 group shadow-xl">
+            <div className="relative aspect-square w-full max-w-[360px] rounded-[12px] overflow-hidden bg-[#0d0e11] border border-[#cfc6b0]/25 group">
               <img
                 src={coverArt}
-                alt={currentTrack?.title || currentStation?.name || 'Active Station Vinyl Art'}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                alt={trackTitle}
+                className="w-full h-full object-cover grayscale-[25%] contrast-[1.05] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
                 onError={(e) => {
                   e.target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80';
                 }}
               />
 
-              {/* Live Visualizer Overlay Tag */}
-              <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#0d0e11]/85 backdrop-blur-md border border-white/10 flex items-center gap-1.5 font-label-telemetry text-[#cfc6b0] shadow-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
-                <span>{channelMeta.code}</span>
+              {/* Viewport Overlay */}
+              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.16em] text-[#cfc6b0] px-2.5 py-1.5 rounded-[6px] bg-[#0d0e11]/85 backdrop-blur-md border border-white/10">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
+                  <span>{channelMeta.code}</span>
+                </div>
+                <span className="text-[#8f918c]">{isPlaying ? 'TRANSMITTING' : 'STANDBY'}</span>
               </div>
 
-              {/* On-Artwork Recessed Track Slate */}
-              <div className="absolute bottom-3 left-3 right-3 p-3 rounded-lg bg-[#0d0e11]/90 backdrop-blur-md border border-white/10 flex items-center justify-between shadow-lg">
+              {/* Lower Track Metadata Slate */}
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 p-2.5 rounded-[8px] bg-[#0d0e11]/90 backdrop-blur-md border border-white/10 flex items-center justify-between">
                 <div className="flex flex-col truncate pr-2">
-                  <span className="text-[10px] font-mono text-[#8f918c] uppercase tracking-wider">ARCHIVE MASTER TAPE</span>
-                  <span className="font-headline-sm text-sm text-[#FAF8F5] truncate">
-                    {currentTrack?.title || currentStation?.name || 'VIBERR Lossless Stream'}
+                  <span className="text-[9px] font-mono text-[#8f918c] uppercase tracking-[0.16em]">
+                    RELAY // MASTER
+                  </span>
+                  <span className="font-space text-sm text-[#FAF8F5] truncate mt-0.5">
+                    {trackTitle}
                   </span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-[#292a2d] flex items-center justify-center text-[#cfc6b0] flex-shrink-0">
+                
+                {/* Equalizer indicator */}
+                <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/30 bg-[#1b1b1f] flex items-center justify-center text-[#00f0ff] flex-shrink-0">
                   {isPlaying ? (
-                    <div className="flex items-end gap-0.5 h-3">
-                      <span className="w-0.5 bg-[#cfc6b0] animate-[pulse_0.8s_ease-in-out_infinite] h-full" />
-                      <span className="w-0.5 bg-[#cfc6b0] animate-[pulse_0.6s_ease-in-out_infinite_0.2s] h-2/3" />
-                      <span className="w-0.5 bg-[#cfc6b0] animate-[pulse_0.9s_ease-in-out_infinite_0.4s] h-4/5" />
+                    <div className="flex items-end gap-1 h-3">
+                      <span className="w-0.5 bg-[#00f0ff] animate-[pulse_0.7s_ease-in-out_infinite] h-full" />
+                      <span className="w-0.5 bg-[#cfc6b0] animate-[pulse_0.5s_ease-in-out_infinite_0.15s] h-2/3" />
+                      <span className="w-0.5 bg-[#00f0ff] animate-[pulse_0.9s_ease-in-out_infinite_0.3s] h-4/5" />
                     </div>
                   ) : (
-                    <span className="w-2 h-2 rounded-full bg-[#8f918c]" />
+                    <Radio className="w-3 h-3 text-[#8f918c]" />
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right: Direct Playback Controls & Station Headliner */}
+          {/* Right: Editorial Statement & Controls */}
           <div className="lg:col-span-7 flex flex-col justify-between h-full gap-6">
-            {/* Station Name & Track Title */}
+            
+            {/* Monument Typography */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-label-telemetry uppercase text-[#cfc6b0] tracking-widest">
-                  {channelMeta.tag}
-                </span>
-                <span className="font-label-telemetry text-[#8f918c]">
-                  <span className="text-[#FAF8F5] font-mono font-bold">{onlineCount?.toLocaleString() || '3,482'}</span> TUNED IN
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-[#cfc6b0]">
+                  ✦ {channelMeta.tag}
                 </span>
               </div>
 
-              <h1 className="font-headline-lg text-[#FAF8F5] tracking-tight leading-tight mb-2">
-                {currentTrack?.title || currentStation?.name || 'Continuous Master Stream'}
+              <h1 className="display-monument text-2xl sm:text-4xl lg:text-5xl text-[#FAF8F5] mb-3">
+                <span className="word-tracer">{firstWord}</span> {remainingWords}
               </h1>
 
-              <p className="font-body-md text-[#c5c7c1] font-light flex flex-wrap items-center gap-2">
-                <span className="font-medium text-[#FAF8F5]">{currentTrack?.artist || 'Viberr Sovereign Archival Collective'}</span>
-                <span className="text-[#8f918c]">•</span>
-                <span className="text-[#8f918c]">{channelMeta.reel}</span>
-              </p>
+              <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-[#8f918c] tracking-wide">
+                <span className="text-[#FAF8F5] font-medium">{currentTrack?.artist || 'Viberr Radio'}</span>
+                <span>•</span>
+                <span className="text-[#00f0ff]">24-BIT FLAC</span>
+                <span>•</span>
+                <button
+                  onClick={() => handleToggleLike(currentTrack)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] border text-[11px] font-mono transition-all cursor-pointer ${
+                    liked
+                      ? 'border-[#cfc6b0] bg-[#cfc6b0]/20 text-[#FAF8F5]'
+                      : 'border-[#2b2f33] hover:border-[#cfc6b0]/50 text-[#8f918c] hover:text-[#FAF8F5] bg-transparent'
+                  }`}
+                  title={liked ? 'Remove from My Vault' : 'Save to My Vault'}
+                >
+                  <Heart className={`w-3 h-3 ${liked ? 'fill-[#cfc6b0] text-[#cfc6b0]' : ''}`} />
+                  <span>{liked ? 'SAVED TO VAULT' : 'SAVE TO VAULT'}</span>
+                </button>
+                <button
+                  onClick={() => spawnRadioFeed(currentTrack)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 text-[11px] font-mono text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer"
+                  title="Generate dynamic intelligent radio feed from this song"
+                >
+                  <Sparkles className="w-3 h-3 text-[#00f0ff]" />
+                  <span>SPAWN RADIO</span>
+                </button>
+              </div>
             </div>
 
-            {/* Live Audio Scrubber & Time Telemetry */}
-            <div className="p-4 rounded-xl bg-[#0d0e11]/85 border border-[#343538]/50 flex flex-col gap-2 shadow-inner">
-              <div className="flex items-center justify-between font-label-telemetry text-[#8f918c]">
+            {/* Audio Timeline & Scrubber */}
+            <div className="p-3.5 rounded-[12px] bg-[#0d0e11]/80 border border-[#2b2f33] flex flex-col gap-2">
+              <div className="flex items-center justify-between font-mono text-[10px] tracking-[0.14em] text-[#8f918c]">
                 <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
-                  <span className="text-[#cfc6b0] font-mono">{isPlaying ? 'LIVE FEED SYNCED' : 'STREAM STANDBY'}</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isLoading ? 'bg-amber-400 animate-pulse' : 'bg-[#00f0ff]'}`} />
+                  <span className="text-[#cfc6b0]">
+                    {isLoading ? 'BUFFERING CARRIER...' : isPlaying ? 'DIRECT FEED' : 'STANDBY'}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 font-mono">
-                  <span className="text-[#FAF8F5] font-semibold">{formatTime(currentTime)}</span>
+                <div className="flex items-center gap-2 font-mono text-xs">
+                  <span className="text-[#FAF8F5] font-medium">
+                    {formatTime(currentTime)}
+                  </span>
                   <span>/</span>
-                  <span className="text-[#8f918c]">{duration > 0 ? formatTime(duration) : 'CONTINUOUS'}</span>
+                  <span className="text-[#8f918c]">{duration > 0 ? formatTime(duration) : 'LIVE'}</span>
                 </div>
               </div>
 
-              {/* Interactive timeline slider */}
+              {/* Scrubber slider */}
               <div
-                className="relative w-full h-2.5 bg-[#343538] rounded-full cursor-pointer group flex items-center"
+                className="relative w-full h-1.5 bg-[#232529] rounded-full cursor-pointer group flex items-center"
                 onClick={handleTimelineClick}
-                title="Click to seek stream position"
+                title="Seek position"
               >
                 <div
                   className="h-full bg-[#cfc6b0] rounded-full transition-all"
                   style={{ width: `${progressPct}%` }}
                 />
                 <div
-                  className="absolute w-4 h-4 rounded-full bg-[#FAF8F5] shadow-md transform -translate-x-1/2 group-hover:scale-125 transition-transform"
+                  className="absolute w-3.5 h-3.5 rounded-full bg-[#FAF8F5] border border-[#00f0ff] shadow-sm transform -translate-x-1/2 group-hover:scale-125 transition-transform"
                   style={{ left: `${progressPct}%` }}
                 />
               </div>
-
-              <div className="flex items-center justify-between text-[10px] font-mono text-[#8f918c] pt-1">
-                <span>INPUT: REEL TAPE A</span>
-                <span>CONVOLUTION: VINTAGE NEVE 8048</span>
-                <span>OUTPUT: LOSSLESS DIRECT FLAC</span>
-              </div>
             </div>
 
-            {/* Tactile Master Controls Deck */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-              {/* Main Action Buttons */}
+            {/* Tactile Outlined Action Controls (Atlantic.vc Action Pattern) */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              
+              {/* Main Audio Buttons */}
               <div className="flex items-center gap-4">
-                {/* Large Play/Pause Tactile Circle */}
+                {/* Outlined Precision Play/Pause Button */}
                 <button
                   onClick={onTogglePlay}
-                  className="w-16 h-16 rounded-full bg-[#FAF8F5] hover:bg-[#eae6df] text-[#121316] flex items-center justify-center transition-all active:scale-95 shadow-[0_4px_24px_rgba(0,0,0,0.8)] cursor-pointer"
+                  className="w-14 h-14 rounded-[12px] border border-[#cfc6b0] hover:border-[#FAF8F5] bg-[#1b1b1f] hover:bg-[#cfc6b0]/15 text-[#FAF8F5] flex items-center justify-center transition-all duration-200 active:translate-y-px cursor-pointer group relative"
                   title={isPlaying ? 'Pause Broadcast (Space)' : 'Start Broadcast (Space)'}
                   aria-label={isPlaying ? 'Pause Broadcast' : 'Start Broadcast'}
                 >
-                  {isLoading ? (
-                    <div className="w-7 h-7 border-2 border-[#121316] border-t-transparent rounded-full animate-spin" />
-                  ) : isPlaying ? (
-                    <Pause className="w-8 h-8 fill-current" />
+                  {isPlaying ? (
+                    <Pause className="w-6 h-6 fill-current text-[#cfc6b0] group-hover:text-[#FAF8F5]" />
                   ) : (
-                    <Play className="w-8 h-8 fill-current ml-1" />
+                    <Play className="w-6 h-6 fill-current ml-0.5 text-[#cfc6b0] group-hover:text-[#FAF8F5]" />
+                  )}
+                  {isLoading && (
+                    <span className="absolute -inset-[2px] rounded-[14px] border-2 border-[#00f0ff] border-t-transparent animate-spin pointer-events-none" />
                   )}
                 </button>
 
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={onPrevTrack}
-                      className="w-9 h-9 rounded-full bg-[#1f1f23] hover:bg-[#292a2d] border border-[#343538]/60 flex items-center justify-center text-[#e3e2e6] hover:text-[#FAF8F5] transition-colors cursor-pointer"
-                      title="Previous Track (P)"
-                      aria-label="Previous Track"
-                    >
-                      <SkipBack className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={onNextTrack}
-                      className="w-9 h-9 rounded-full bg-[#1f1f23] hover:bg-[#292a2d] border border-[#343538]/60 flex items-center justify-center text-[#e3e2e6] hover:text-[#FAF8F5] transition-colors cursor-pointer"
-                      title="Next Track (N)"
-                      aria-label="Next Track"
-                    >
-                      <SkipForward className="w-4 h-4" />
-                    </button>
-                    <span className="font-label-telemetry text-[#8f918c] ml-2 uppercase">HOP STATION</span>
+                {/* Track Hops */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onPrevTrack}
+                    className="w-9 h-9 rounded-[8px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 bg-transparent flex items-center justify-center text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer"
+                    title="Previous Track (P)"
+                    aria-label="Previous Track"
+                  >
+                    <SkipBack className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={onNextTrack}
+                    className="w-9 h-9 rounded-[8px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 bg-transparent flex items-center justify-center text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer"
+                    title="Next Track (N)"
+                    aria-label="Next Track"
+                  >
+                    <SkipForward className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="ml-2 flex flex-col font-mono text-[10px]">
+                    <span className="text-[#FAF8F5] tracking-[0.14em]">CHANNEL {channelMeta.code}</span>
+                    <span className="text-[#8f918c]">SOVEREIGN DIRECT FEED</span>
                   </div>
-                  <span className={`text-[11px] font-mono mt-1 ${isPlaying ? 'text-[#FAF8F5]' : 'text-[#cfc6b0]'}`}>
-                    {isPlaying ? `LIVE STREAMING ${channelMeta.code} // FLAC 96kHz` : 'STREAM PRIMED • CLICK TO PLAY'}
-                  </span>
                 </div>
               </div>
 
-              {/* Live Volume & DSP Quick Access */}
+              {/* Volume & Acoustic DSP Quick Links */}
               <div className="flex items-center gap-4">
                 {/* Volume Slider Control */}
                 <div className="flex items-center gap-2">
@@ -243,14 +281,14 @@ export default function MasterListeningDeck({
                     title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
                   >
                     {isMuted || volume === 0 ? (
-                      <VolumeX className="w-4 h-4 text-amber-400" />
+                      <VolumeX className="w-3.5 h-3.5 text-amber-400" />
                     ) : (
-                      <Volume2 className="w-4 h-4" />
+                      <Volume2 className="w-3.5 h-3.5" />
                     )}
                   </button>
 
                   <div
-                    className="relative w-24 h-1.5 bg-[#343538] rounded-full cursor-pointer group"
+                    className="relative w-20 h-1 bg-[#232529] rounded-full cursor-pointer group"
                     onClick={handleVolumeClick}
                     title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
                   >
@@ -259,29 +297,19 @@ export default function MasterListeningDeck({
                       style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
                     />
                   </div>
-                  <span className="font-mono text-[11px] text-[#8f918c] w-9 text-right">
+                  <span className="font-mono text-[10px] text-[#8f918c] w-8 text-right">
                     {Math.round((isMuted ? 0 : volume) * 100)}%
                   </span>
                 </div>
 
-                {/* Jump to DSP Acoustic Room */}
+                {/* Jump to Acoustic Matrix */}
                 <a
                   href="#acoustic-room"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#343538]/60 hover:bg-[#343538] text-[#e3e2e6] hover:text-[#FAF8F5] font-label-pill uppercase border border-[#343538]/80 transition-colors shadow-sm"
+                  className="wireframe-btn !py-1.5 !px-3"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-[#cfc6b0]" />
-                  <span>ROOM DSP</span>
+                  <Sliders className="w-3 h-3 text-[#cfc6b0]" />
+                  <span>DSP MATRIX</span>
                 </a>
-
-                {/* Settings / Config Button */}
-                <button
-                  onClick={onOpenAudioSource}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#c5c7c1] hover:text-[#FAF8F5] font-label-pill uppercase border border-[#343538]/60 transition-colors cursor-pointer"
-                  title="Audio Engine & Device Settings"
-                >
-                  <Settings className="w-3.5 h-3.5 text-[#8f918c]" />
-                  <span className="hidden sm:inline font-mono text-[11px]">SETTINGS</span>
-                </button>
               </div>
 
             </div>
@@ -292,3 +320,4 @@ export default function MasterListeningDeck({
     </section>
   );
 }
+

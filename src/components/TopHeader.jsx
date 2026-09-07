@@ -1,19 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Pause, Settings, Search, Radio, ChevronDown, Check, Share2, Sparkles } from 'lucide-react';
+import { Play, Pause, Settings, Search, Radio, ChevronDown, Check, Sparkles, Activity } from 'lucide-react';
 import { STATIONS } from '../data/stationsData';
 
 const NAV_ITEMS = [
-  { id: 'deck', label: 'DECK', path: '/', hash: '#live-deck' },
-  { id: 'trends', label: 'TRENDS', path: '/', hash: '#frequency-directory' },
-  { id: 'explore', label: 'EXPLORE', path: '/explore' },
-  { id: 'equalizer', label: 'EQUALIZER', path: '/equalizer' },
-  { id: 'library', label: 'LIBRARY', path: '/library' },
-  { id: 'plugins', label: 'PLUGINS', path: '/plugins' },
-  { id: 'about', label: 'ABOUT', path: '/about' }
+  { id: 'deck', code: '01', label: 'DECK', path: '/', hash: '#live-deck' },
+  { id: 'trends', code: '02', label: 'RADAR', path: '/', hash: '#frequency-directory' },
+  { id: 'explore', code: '03', label: 'EXPLORE', path: '/explore' },
+  { id: 'equalizer', code: '04', label: 'DSP MATRIX', path: '/equalizer' },
+  { id: 'library', code: '05', label: 'ARCHIVE', path: '/library' },
+  { id: 'plugins', code: '06', label: 'MODULES', path: '/plugins' },
+  { id: 'about', code: '07', label: 'DISPATCH', path: '/about' }
 ];
 
-export default function TopHeader({
+function TopHeader({
   currentStation,
   onSelectStation,
   volume,
@@ -39,7 +39,6 @@ export default function TopHeader({
   const [stationSearch, setStationSearch] = useState('');
   const dropdownRef = useRef(null);
 
-  // Close dropdown on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -86,56 +85,52 @@ export default function TopHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#121316]/90 backdrop-blur-xl border-b border-[#343538]/50 select-none">
-      <div className="h-20 max-w-[1280px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#0d0e11]/92 backdrop-blur-xl border-b border-[#2b2f33]/80 select-none">
+      <div className="h-16 max-w-[1400px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
         
-        {/* Left: Brand & Identity */}
-        <div className="flex items-center gap-3.5 relative" ref={dropdownRef}>
+        {/* Left: Brand Identity with Geometric Cad Glyph */}
+        <div className="flex items-center gap-4 relative" ref={dropdownRef}>
           <button
             onClick={() => setIsStationMenuOpen((prev) => !prev)}
-            className="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center bg-[#0d0e11] border border-[#343538]/80 hover:border-[#cfc6b0] transition-colors flex-shrink-0 cursor-pointer group shadow-sm"
-            title="Switch Radio Channel"
+            className="flex items-center gap-2 text-left cursor-pointer group focus-visible:outline-none"
+            title="Sovereign Channels Matrix"
           >
-            <span className="font-serif text-base font-bold text-[#cfc6b0] group-hover:scale-110 transition-transform">
-              V
-            </span>
+            {/* Geometric brand mark */}
+            <div className="w-7 h-7 rounded-[7px] overflow-hidden border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] transition-colors relative flex items-center justify-center bg-[#0D0D11]">
+              <img src="/viberr-icon.svg" alt="Viberr" className="w-full h-full object-cover" />
+            </div>
+
+            <div className="flex items-baseline gap-2">
+              <span className="font-space text-base tracking-[-0.03em] font-normal text-[#FAF8F5]">
+                viberr<span className="text-[#00f0ff]">.</span>matrix
+              </span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#cfc6b0]/70 border border-[#2b2f33] px-1.5 py-0.5 rounded-[4px]">
+                CH // {currentStation?.id ? currentStation.id.slice(0, 3).toUpperCase() : '01'}
+              </span>
+            </div>
+            <ChevronDown className="w-3 h-3 text-[#cfc6b0]/60 group-hover:text-[#FAF8F5] transition-transform duration-200" />
           </button>
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-headline-sm text-lg tracking-tight text-[#FAF8F5] leading-none">
-                VIBERR
-              </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#292a2d] text-[#cfc6b0] uppercase font-mono font-medium">
-                LIVE
-              </span>
-              <button
-                onClick={() => setIsStationMenuOpen((prev) => !prev)}
-                className="text-[#8f918c] hover:text-[#FAF8F5] transition-colors cursor-pointer flex items-center text-xs font-mono"
-                title="Channel Selector"
-              >
-                <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
-              </button>
-            </div>
-            <span className="font-label-telemetry text-[#8f918c] uppercase tracking-widest mt-0.5 hidden sm:block text-[10px]">
-              LOSSLESS 24-BIT AUDIOPHILE ARCHIVE
-            </span>
-          </div>
-
-          {/* Station Quick Dropdown Menu */}
+          {/* Stepped Charcoal Channel Dropdown with Wireframe Border */}
           {isStationMenuOpen && (
-            <div className="absolute top-14 left-0 w-80 max-h-96 bg-[#1b1b1f] border border-[#343538] rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col backdrop-blur-2xl">
-              <div className="p-3 border-b border-[#343538]/60 bg-[#0d0e11]/80">
+            <div className="absolute top-12 left-0 w-84 bg-[#121316] border border-[#cfc6b0]/25 rounded-[12px] shadow-2xl overflow-hidden z-50 flex flex-col backdrop-blur-2xl">
+              <div className="p-3 border-b border-[#2b2f33] bg-[#0d0e11]/90 flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#cfc6b0]">
+                  ARCHIVAL CARRIER NODES
+                </span>
+                <span className="font-mono text-[9px] text-[#8f918c]">[ 28 CHANNELS ]</span>
+              </div>
+              <div className="p-2 border-b border-[#2b2f33]/60">
                 <input
                   type="text"
                   value={stationSearch}
                   onChange={(e) => setStationSearch(e.target.value)}
-                  placeholder="Filter 28 sovereign vaults..."
-                  className="w-full px-3 py-1.5 rounded-lg bg-[#1f1f23] border border-[#343538] text-xs text-[#FAF8F5] placeholder-[#8f918c] focus:outline-none font-mono"
+                  placeholder="Filter sovereign channels..."
+                  className="w-full px-3 py-1.5 rounded-[6px] bg-[#1b1b1f] border border-[#2b2f33] text-xs text-[#FAF8F5] placeholder-[#8f918c] focus:outline-none focus:border-[#cfc6b0]/60 font-mono"
                   autoFocus
                 />
               </div>
-              <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scroll">
+              <div className="overflow-y-auto max-h-72 p-1.5 space-y-1 custom-scroll">
                 {filteredStations.map((station) => {
                   const isSelected = currentStation?.id === station.id;
                   return (
@@ -145,19 +140,21 @@ export default function TopHeader({
                         onSelectStation(station);
                         setIsStationMenuOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-[8px] text-left text-xs transition-all cursor-pointer font-mono ${
                         isSelected
-                          ? 'bg-[#FAF8F5] text-[#121316] font-semibold'
-                          : 'text-[#FAF8F5] hover:bg-[#292a2d]'
+                          ? 'bg-[#232529] text-[#FAF8F5] border border-[#cfc6b0]/50'
+                          : 'text-[#8f918c] hover:text-[#FAF8F5] hover:bg-[#1b1b1f]'
                       }`}
                     >
                       <div className="truncate pr-2">
-                        <div className="truncate">{station.name}</div>
-                        <div className={`text-[10px] truncate ${isSelected ? 'text-[#121316]/70' : 'text-[#8f918c]'}`}>
-                          {station.tagline || `${station.songs?.length || 0} tracks`}
+                        <div className="text-[#FAF8F5] text-[12px] truncate">{station.name}</div>
+                        <div className="text-[10px] text-[#8f918c] tracking-wide truncate">
+                          {station.tagline || 'Lossless Direct Carrier'}
                         </div>
                       </div>
-                      {isSelected && <Check className="w-3.5 h-3.5 flex-shrink-0" />}
+                      {isSelected && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] shadow-[0_0_8px_#00f0ff]" />
+                      )}
                     </button>
                   );
                 })}
@@ -166,71 +163,73 @@ export default function TopHeader({
           )}
         </div>
 
-        {/* Center: Multi-Page & Section Anchor Navigation */}
-        <nav className="hidden md:flex items-center gap-1 px-1.5 py-1 bg-[#1b1b1f]/90 rounded-full border border-[#343538]/60 shadow-inner overflow-x-auto scrollbar-none">
+        {/* Center: Observatory Monospaced Telemetry Navigation */}
+        <nav className="hidden lg:flex items-center gap-6">
           {NAV_ITEMS.map((item) => {
             const isActive = isItemActive(item);
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
-                className={`px-3 py-1.5 rounded-full font-label-pill text-xs uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                className={`font-mono text-[11px] uppercase tracking-[0.16em] transition-all cursor-pointer relative py-1 flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-[#FAF8F5] text-[#121316] font-bold shadow-sm'
-                    : 'text-[#c5c7c1] hover:text-[#FAF8F5] hover:bg-[#292a2d]/60'
+                    ? 'text-[#FAF8F5] font-semibold'
+                    : 'text-[#8f918c] hover:text-[#FAF8F5]'
                 }`}
               >
-                {item.label}
+                <span className="text-[9px] text-[#cfc6b0]/60">{item.code}</span>
+                <span>{item.label}</span>
+                {isActive && (
+                  <span className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-[#cfc6b0]" />
+                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Right Header Actions */}
+        {/* Right: Technical Readout & Outlined Action Triggers */}
         <div className="flex items-center gap-3">
-          {/* FLAC Telemetry Pill */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0d0e11] border border-[#343538]/60 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#cfc6b0] tape-pulse" />
-            <span className="font-label-telemetry text-[#cfc6b0] uppercase text-[10px]">
-              FLAC 96kHz DIRECT
-            </span>
+          {/* Signal Status Telemetry Badge */}
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-[6px] border border-[#2b2f33] bg-[#121316] font-mono text-[10px] tracking-[0.14em] uppercase text-[#cfc6b0]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
+            <span>24-BIT // 96kHz</span>
           </div>
 
           {/* Search Trigger (⌘K) */}
           <button
             onClick={onOpenGlobalSearch}
-            className="p-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#c5c7c1] hover:text-[#FAF8F5] border border-[#343538]/60 transition-colors cursor-pointer"
-            title="Global Search (⌘K)"
+            className="w-8 h-8 rounded-[8px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 bg-transparent flex items-center justify-center text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer"
+            title="Global Search (⌘K / /)"
             aria-label="Search"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-3.5 h-3.5" />
           </button>
 
-          {/* Audio Output & DSP Configuration */}
+          {/* DSP & Matrix Config Trigger */}
           <button
             onClick={onOpenAudioSource}
-            className="px-3 py-2 rounded-full bg-[#1b1b1f] hover:bg-[#292a2d] text-[#FAF8F5] border border-[#343538]/60 font-label-pill text-xs transition-colors uppercase tracking-wider flex items-center gap-1.5 shadow-sm group cursor-pointer"
-            title="Audio Output & DSP Configuration"
+            className="wireframe-btn !py-1.5 !px-3"
+            title="Audio Matrix & DSP Configuration"
           >
-            <Settings className="w-3.5 h-3.5 text-[#cfc6b0] group-hover:rotate-45 transition-transform" />
-            <span className="hidden sm:inline font-mono text-[11px]">CONFIG</span>
+            <Settings className="w-3 h-3 text-[#cfc6b0]" />
+            <span className="hidden md:inline">MATRIX</span>
           </button>
 
-          {/* Primary Quick Play/Pause Stream Button */}
+          {/* Primary Outlined Action Trigger (Atlantic.vc CTA style) */}
           <button
             onClick={onTogglePlay}
-            className="px-4 py-2 rounded-full bg-[#FAF8F5] text-[#121316] hover:bg-[#eae6df] font-label-pill text-xs transition-all uppercase tracking-wider flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer font-bold"
-            title={isPlaying ? 'Pause Stream (Space)' : 'Play Stream (Space)'}
+            className="wireframe-btn-accent !py-1.5 !px-4"
+            title={isPlaying ? 'Pause Broadcast (Space)' : 'Start Broadcast (Space)'}
           >
             {isPlaying ? (
               <>
-                <Pause className="w-3.5 h-3.5 fill-current" />
-                <span>PAUSE STREAM</span>
+                <Pause className="w-3 h-3 fill-current" />
+                <span>DISPATCH ACTIVE</span>
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>PLAY STREAM</span>
+                <Play className="w-3 h-3 fill-current" />
+                <span>INITIALIZE AIRPLAY</span>
               </>
             )}
           </button>
@@ -240,3 +239,7 @@ export default function TopHeader({
     </header>
   );
 }
+
+export default React.memo(TopHeader);
+
+

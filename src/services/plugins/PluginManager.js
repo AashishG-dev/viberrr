@@ -15,11 +15,11 @@ export const PLUGIN_CATEGORIES = {
 const DEFAULT_PLUGINS = [
   {
     id: 'spotify-provider',
-    name: 'Spotify',
-    author: 'nukeop / viberr',
+    name: 'Neural Spectral Index',
+    author: 'Observatory Protocol',
     version: 'v0.2.2',
     category: 'metadata',
-    description: 'Spotify 100M+ global metadata & catalog provider for Viberr stream engine',
+    description: 'High-density acoustic metadata resolver and global discography index',
     icon: 'spotify',
     installed: true,
     enabled: true,
@@ -28,11 +28,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'youtube-streaming',
-    name: 'YouTube',
-    author: 'nukeop / viberr',
+    name: 'Sovereign Airplay Dispatch',
+    author: 'Observatory Protocol',
     version: 'v0.1.2',
     category: 'streaming',
-    description: 'High-performance audio streaming provider playing full-length tracks via headless engine',
+    description: 'Headless continuous wave carrier resolving low-latency acoustic feeds',
     icon: 'youtube',
     installed: true,
     enabled: true,
@@ -41,11 +41,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'lossless-cdn',
-    name: 'Lossless CDN',
-    author: 'viberr core',
+    name: 'Lossless Matrix Core',
+    author: 'Viberr Engineering',
     version: 'v1.0.0',
     category: 'streaming',
-    description: '28+ High-fidelity 320kbps curated station streams with 2,229+ master tracks',
+    description: 'High-fidelity 24-bit 96kHz curated acoustic station channels & uncompressed cuts',
     icon: 'zap',
     installed: true,
     enabled: true,
@@ -54,11 +54,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'soundcloud-plugin',
-    name: 'SoundCloud',
-    author: 'nukeop',
+    name: 'Acoustic Underground Node',
+    author: 'Observatory Protocol',
     version: 'v0.3.0',
     category: 'streaming',
-    description: 'Browse, discover and stream underground remixes, mashups, and electronic tracks',
+    description: 'Autonomous frequency discovery, live sets, and unreleased master stems',
     icon: 'soundcloud',
     installed: false,
     enabled: false,
@@ -67,11 +67,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'bandcamp-plugin',
-    name: 'Bandcamp',
-    author: 'nukeop',
+    name: 'Master Press Archive',
+    author: 'Observatory Protocol',
     version: 'v1.1.2',
     category: 'streaming',
-    description: 'Browse and stream independent releases, lo-fi beats, and physical band albums',
+    description: 'Direct studio session tape transfers, lo-fi cuts, and physical archive matrices',
     icon: 'bandcamp',
     installed: false,
     enabled: false,
@@ -80,11 +80,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'lrclib-lyrics',
-    name: 'LRCLIB Lyrics',
-    author: 'community',
+    name: 'Realtime Phonetic Synchronizer',
+    author: 'Acoustic Labs',
     version: 'v0.5.0',
     category: 'lyrics',
-    description: 'Synchronized real-time scrolling karaoke lyrics provider for global tracks',
+    description: 'Sub-millisecond karaoke lyric alignment and phonetic wave tracking',
     icon: 'lyrics',
     installed: true,
     enabled: true,
@@ -93,11 +93,11 @@ const DEFAULT_PLUGINS = [
   },
   {
     id: 'discogs-metadata',
-    name: 'Discogs',
-    author: 'nukeop',
+    name: 'Analog Pressing Registry',
+    author: 'Observatory Protocol',
     version: 'v0.2.0',
     category: 'metadata',
-    description: 'Fetch detailed vinyl release credits, master year, and discography catalogs',
+    description: 'Deep vinyl release credits, master recording dates, and archive press data',
     icon: 'discogs',
     installed: false,
     enabled: false,
@@ -119,7 +119,9 @@ class PluginManager {
         const parsed = JSON.parse(saved);
         return DEFAULT_PLUGINS.map((p) => {
           const matched = parsed.find((item) => item.id === p.id);
-          return matched ? { ...p, ...matched } : p;
+          return matched 
+            ? { ...p, installed: matched.installed, enabled: matched.enabled, latencyMs: matched.latencyMs || p.latencyMs } 
+            : p;
         });
       }
     } catch (e) {}

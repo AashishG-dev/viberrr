@@ -6,6 +6,7 @@ import AcousticRoom from '../components/AcousticRoom';
 import ManifestoSection from '../components/ManifestoSection';
 import TactileShortcutsBar from '../components/TactileShortcutsBar';
 import SiteFooter from '../components/SiteFooter';
+import ParticleCloudCanvas from '../components/ParticleCloudCanvas';
 
 export default function HomePage() {
   const {
@@ -39,8 +40,11 @@ export default function HomePage() {
   } = useAudio();
 
   return (
-    <div className="w-full min-h-screen bg-[#121316] text-[#e3e2e6] pt-20 pb-28">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 flex flex-col w-full">
+    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-18 pb-28 relative overflow-hidden">
+      {/* Atlantic.vc Signature Wave Particle Cloud Background */}
+      <ParticleCloudCanvas isPlaying={isPlaying} />
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 flex flex-col w-full relative z-10">
         
         {/* Section 1: Master Listening Deck */}
         <MasterListeningDeck
@@ -63,7 +67,7 @@ export default function HomePage() {
           onOpenAudioSource={() => setIsAudioSourceOpen(true)}
         />
 
-        {/* Sections 2 & 3: Song Trends & Global Hits (Spotify & YouTube) */}
+        {/* Sections 2 & 3: Acoustic Repertory & Global Frequencies */}
         <SongTrendsSection
           currentTrack={currentTrack}
           isPlaying={isPlaying}

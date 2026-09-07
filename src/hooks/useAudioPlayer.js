@@ -26,6 +26,7 @@ export function useAudioPlayer(initialTracks = []) {
   const [isShuffled, setIsShuffled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLiveStream, setIsLiveStream] = useState(false);
+  const [userQueue, setUserQueue] = useState([]);
 
   const currentTrack = tracks[currentTrackIndex] || null;
   const isCurrentTrackYouTube = Boolean(
@@ -267,6 +268,18 @@ export function useAudioPlayer(initialTracks = []) {
 
     const isYt = Boolean(targetTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(targetTrack.videoId));
 
+    setTracks((prev) => {
+      if (!prev[idx]) return prev;
+      const copy = [...prev];
+      copy[idx] = {
+        ...copy[idx],
+        ...targetTrack,
+        isYouTubeEngine: isYt,
+        videoId: isYt ? targetTrack.videoId : (copy[idx].videoId || '')
+      };
+      return copy;
+    });
+
     if (isYt) {
       if (audioRef.current) audioRef.current.pause();
       ytEngine.loadVideo(targetTrack.videoId, true, targetTrack.duration || 210);
@@ -438,15 +451,40 @@ export function useAudioPlayer(initialTracks = []) {
     }
   }, [isPlaying, currentTrack, isCurrentTrackYouTube, ytEngine, isMuted, volume, playDirectTrack, tracks]);
 
+  const addToUserQueue = useCallback((track) => {
+    if (!track) return;
+    setUserQueue((prev) => [...prev, track]);
+  }, []);
+
+  const playNextInUserQueue = useCallback((track) => {
+    if (!track) return;
+    setUserQueue((prev) => [track, ...prev]);
+  }, []);
+
+  const removeFromUserQueue = useCallback((index) => {
+    setUserQueue((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const clearUserQueue = useCallback(() => {
+    setUserQueue([]);
+  }, []);
+
   const handleNextTrack = useCallback(() => {
     const now = Date.now();
     if (now - lastActionTimeRef.current < 200) return;
     lastActionTimeRef.current = now;
 
+    if (userQueue.length > 0) {
+      const nextTrack = userQueue[0];
+      setUserQueue((prev) => prev.slice(1));
+      playDirectTrack(nextTrack, tracks);
+      return;
+    }
+
     if (tracks.length === 0 || isLiveStream) return;
     const nextIdx = (currentTrackIndex + 1) % tracks.length;
     playTrackAtIndex(nextIdx);
-  }, [tracks, currentTrackIndex, isLiveStream, playTrackAtIndex]);
+  }, [userQueue, tracks, isLiveStream, currentTrackIndex, playDirectTrack, playTrackAtIndex]);
 
   handleNextTrackRef.current = handleNextTrack;
 
@@ -454,15 +492,19 @@ export function useAudioPlayer(initialTracks = []) {
     if (tracks.length === 0 || isLiveStream) return;
     const audio = audioRef.current;
 
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
+    if (currentTime > 3) {
+      if (isCurrentTrackYouTube) {
+        ytEngine.seekTo(0);
+      } else if (audio) {
+        audio.currentTime = 0;
+      }
       setCurrentTime(0);
       return;
     }
 
     const prevIdx = (currentTrackIndex - 1 + tracks.length) % tracks.length;
     playTrackAtIndex(prevIdx);
-  }, [tracks, currentTrackIndex, isLiveStream, playTrackAtIndex]);
+  }, [tracks, currentTrackIndex, isLiveStream, currentTime, isCurrentTrackYouTube, ytEngine, playTrackAtIndex]);
 
   const selectTrack = useCallback((index) => {
     playTrackAtIndex(index);
@@ -542,6 +584,11 @@ export function useAudioPlayer(initialTracks = []) {
     setStationTracks,
     setLiveStreamSource,
     playDirectTrack,
+    userQueue,
+    addToUserQueue,
+    playNextInUserQueue,
+    removeFromUserQueue,
+    clearUserQueue,
     audioElement: audioRef.current
   };
 }

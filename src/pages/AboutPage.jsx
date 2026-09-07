@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, ShieldAlert, Sparkles, Zap, Heart, Keyboard, Globe, Cpu, Music } from 'lucide-react';
+import { Radio, Sparkles, Zap, Heart, Keyboard, Globe, Cpu, Music } from 'lucide-react';
 import { useAudio } from '../context/AudioContext';
 import SiteFooter from '../components/SiteFooter';
 
@@ -45,9 +45,9 @@ export default function AboutPage() {
             <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center border border-[#343538]/60">
               <Cpu className="w-5 h-5" />
             </div>
-            <h3 className="font-headline-sm text-lg text-[#FAF8F5]">Real-Time Song Trends</h3>
+            <h3 className="font-headline-sm text-lg text-[#FAF8F5]">Real-Time Acoustic Telemetry</h3>
             <p className="font-body-sm text-xs text-[#c5c7c1] leading-relaxed">
-              Multi-source aggregation blending Spotify Viral Charts, YouTube Music trending feeds, and sovereign radio catalogs into a seamless surf stream.
+              Multi-source acoustic aggregation blending Global Spectral Waves, Neural Airplay Feeds, and Sovereign Lossless Catalogs into an uninterrupted acoustic stream.
             </p>
           </div>
 
@@ -65,23 +65,6 @@ export default function AboutPage() {
             >
               View keyboard shortcut sheet →
             </button>
-          </div>
-        </div>
-
-        {/* 18+ Content & Sponsored Content Notice */}
-        <div className="rounded-2xl p-6 sm:p-8 border border-[#343538]/70 bg-[#16171a] shadow-sm mb-10">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#0d0e11] text-[#cfc6b0] flex items-center justify-center flex-shrink-0 border border-[#343538]/70">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-headline-sm text-base text-[#FAF8F5]">
-                18+ Disclaimer & Sponsored Content Notice
-              </h3>
-              <p className="font-body-sm text-xs text-[#c5c7c1] mt-1.5 leading-relaxed">
-                Viberr features raw artistic hip hop discographies (including uncensored MTV Hustle, Desi Hip Hop, drill, and underground rap) which may contain explicit lyrics. Additionally, non-intrusive sponsored placements help keep Viberr 100% free, sovereign, and accessible worldwide.
-              </p>
-            </div>
           </div>
         </div>
 

@@ -6,7 +6,7 @@
 
 export class SpotifyProvider {
   constructor() {
-    this.name = 'Spotify & Global Catalog';
+    this.name = 'Neural Spectral Index';
     this.id = 'spotify-global';
   }
 
@@ -38,11 +38,11 @@ export class SpotifyProvider {
               ? item.artworkUrl100.replace('100x100bb', '600x600bb')
               : '/favicon.svg',
             source: 'spotify',
-            sourceLabel: 'Spotify Full Track'
+            sourceLabel: 'Master Repertory // 24-Bit'
           }));
       }
     } catch (err) {
-      console.warn('Spotify/Apple search error:', err);
+      console.warn('Catalog search error:', err);
     }
 
     return [];

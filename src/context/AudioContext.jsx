@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { STATIONS, DEFAULT_STATION_ID, getStationById, getStationBySlug } from '../data/stationsData';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useWakeLock } from '../hooks/useWakeLock';
@@ -9,6 +9,8 @@ import { useSecurityShield } from '../hooks/useSecurityShield';
 import { useAmbientSoundscapes } from '../hooks/useAmbientSoundscapes';
 import { useStudioEqualizer } from '../hooks/useStudioEqualizer';
 import { useAdManager } from '../hooks/useAdManager';
+import { useLocalVault } from '../hooks/useLocalVault';
+import { streamResolver } from '../services/streaming/StreamResolver';
 import { AUDIO_SOURCES } from '../components/AudioSourceModal';
 import { copyShareLink } from '../utils/formatters';
 
@@ -86,8 +88,24 @@ export function AudioProvider({ children }) {
     setStationTracks,
     setLiveStreamSource,
     playDirectTrack,
+    userQueue,
+    addToUserQueue,
+    playNextInUserQueue,
+    removeFromUserQueue,
+    clearUserQueue,
     audioElement
   } = useAudioPlayer(currentStation?.songs || []);
+
+  // Client-Side Local Vault / Personalization Hook
+  const {
+    vaultTracks,
+    isLiked,
+    toggleLike,
+    clearVault,
+    exportVault,
+    importVault,
+    vaultCount
+  } = useLocalVault();
 
   // Real-time Visualizer Frequency Spectrum Hook
   const { frequencies, audioLevel } = useAudioVisualizer(audioElement, isPlaying);
@@ -121,6 +139,47 @@ export function AudioProvider({ children }) {
       setIsToastVisible(false);
     }, 2800);
   }, []);
+
+  const handleToggleLike = useCallback((track) => {
+    const target = track || currentTrack;
+    if (!target) return;
+    const nowLiked = toggleLike(target);
+    showToast(nowLiked ? `Saved "${target.title}" to My Vault` : `Removed "${target.title}" from My Vault`);
+    return nowLiked;
+  }, [currentTrack, toggleLike, showToast]);
+
+  const handlePlayNext = useCallback((track) => {
+    if (!track) return;
+    playNextInUserQueue(track);
+    showToast(`"${track.title}" set to Play Next`);
+  }, [playNextInUserQueue, showToast]);
+
+  const handleAddToQueue = useCallback((track) => {
+    if (!track) return;
+    addToUserQueue(track);
+    showToast(`Added "${track.title}" to Up Next`);
+  }, [addToUserQueue, showToast]);
+
+  const spawnRadioFeed = useCallback(async (track) => {
+    const seedTrack = track || currentTrack;
+    if (!seedTrack) {
+      showToast('Select a track to spawn radio feed');
+      return;
+    }
+    showToast(`Generating Smart Radio for "${seedTrack.title}"...`);
+    try {
+      const related = await streamResolver.getRelatedTracks(seedTrack);
+      if (related && related.length > 0) {
+        const radioTracks = [seedTrack, ...related.filter((t) => t.id !== seedTrack.id)];
+        setStationTracks(radioTracks, false);
+        showToast(`✦ Radio Feed Active: ${related.length} curated tracks`);
+      } else {
+        showToast('Radio generator found no immediate matches');
+      }
+    } catch (e) {
+      showToast('Radio generation offline');
+    }
+  }, [currentTrack, showToast, setStationTracks]);
 
   const handleToggleMinimalMode = useCallback(() => {
     setIsMinimalMode((prev) => {
@@ -199,7 +258,7 @@ export function AudioProvider({ children }) {
     }
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     currentStation,
     currentAudioSource,
     audioQuality,
@@ -261,6 +320,22 @@ export function AudioProvider({ children }) {
     setStationTracks,
     setLiveStreamSource,
     playDirectTrack,
+    userQueue,
+    addToUserQueue,
+    playNextInUserQueue,
+    removeFromUserQueue,
+    clearUserQueue,
+    handlePlayNext,
+    handleAddToQueue,
+    vaultTracks,
+    isLiked,
+    toggleLike,
+    handleToggleLike,
+    clearVault,
+    exportVault,
+    importVault,
+    vaultCount,
+    spawnRadioFeed,
     frequencies,
     audioLevel,
     onlineCount,
@@ -277,7 +352,90 @@ export function AudioProvider({ children }) {
     handleShareStation,
     handleToggleFullscreen,
     handleToggleMinimalMode
-  };
+  }), [
+    currentStation,
+    currentAudioSource,
+    audioQuality,
+    isPlaylistOpen,
+    isShortcutsOpen,
+    isSupportOpen,
+    isAudioSourceOpen,
+    isAmbientOpen,
+    isGlobalSearchOpen,
+    isPluginsOpen,
+    isOnboardingOpen,
+    isRainVisualEnabled,
+    isFullscreen,
+    isMinimalMode,
+    pipContainer,
+    activeEffects,
+    toggleEffect,
+    setEffectVolume,
+    isAdVisible,
+    adCycleId,
+    dismissAd,
+    toastMsg,
+    isToastVisible,
+    showToast,
+    isPipActive,
+    handleOpenPip,
+    closePip,
+    currentTrack,
+    currentTrackIndex,
+    tracks,
+    isPlaying,
+    currentTime,
+    duration,
+    buffered,
+    volume,
+    isMuted,
+    isShuffled,
+    isLoading,
+    isLiveStream,
+    togglePlay,
+    handleNextTrack,
+    handlePrevTrack,
+    selectTrack,
+    seek,
+    changeVolume,
+    toggleMute,
+    toggleShuffle,
+    setStationTracks,
+    setLiveStreamSource,
+    playDirectTrack,
+    userQueue,
+    addToUserQueue,
+    playNextInUserQueue,
+    removeFromUserQueue,
+    clearUserQueue,
+    handlePlayNext,
+    handleAddToQueue,
+    vaultTracks,
+    isLiked,
+    toggleLike,
+    handleToggleLike,
+    clearVault,
+    exportVault,
+    importVault,
+    vaultCount,
+    spawnRadioFeed,
+    frequencies,
+    audioLevel,
+    onlineCount,
+    eqPreset,
+    eqBandGains,
+    eqPreampGain,
+    isEqEnabled,
+    handleSelectEqPreset,
+    handleSetBandGain,
+    handleSetPreampGain,
+    handleResetEq,
+    handleSelectStation,
+    handleSelectAudioSource,
+    handleShareStation,
+    handleToggleFullscreen,
+    handleToggleMinimalMode
+  ]);
 
   return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
 }

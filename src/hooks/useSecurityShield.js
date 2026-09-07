@@ -22,10 +22,15 @@ export function useSecurityShield() {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
 
+      const triggerThreat = (reason) => {
+        window.dispatchEvent(new CustomEvent('viberr:threat-detected', { detail: { reason } }));
+      };
+
       // F12 -> DevTools
       if (e.key === 'F12' || e.keyCode === 123) {
         e.preventDefault();
         e.stopPropagation();
+        triggerThreat('F12_INSPECTION_ATTEMPT');
         return false;
       }
 
@@ -35,6 +40,7 @@ export function useSecurityShield() {
       if (ctrlKey && e.shiftKey && ['i', 'j', 'c', 'I', 'J', 'C'].includes(e.key)) {
         e.preventDefault();
         e.stopPropagation();
+        triggerThreat('DEVTOOLS_INSPECTOR_ATTEMPT');
         return false;
       }
 
@@ -42,6 +48,7 @@ export function useSecurityShield() {
       if (ctrlKey && (e.key === 'u' || e.key === 'U')) {
         e.preventDefault();
         e.stopPropagation();
+        triggerThreat('VIEW_SOURCE_ATTEMPT');
         return false;
       }
 
