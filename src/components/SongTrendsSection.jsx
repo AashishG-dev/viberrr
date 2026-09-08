@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Search, Play, Pause, RefreshCw, Radio, 
-  Sparkles, ChevronDown, ChevronUp, Activity, Sliders, Heart, Plus
+  Sparkles, ChevronDown, ChevronUp, Activity, Sliders, Heart, Plus, FolderPlus
 } from 'lucide-react';
 import { trendsService } from '../services/streaming/TrendsService';
 import { STATIONS } from '../data/stationsData';
@@ -30,6 +30,7 @@ function SongTrendsSection({
     isLiked,
     handleToggleLike,
     handlePlayNext,
+    openAddToPlaylist,
     vaultCount
   } = useAudio();
 
@@ -312,17 +313,29 @@ function SongTrendsSection({
 
                     {/* Quick Action Buttons on Artwork */}
                     <div className="absolute inset-0 bg-[#0d0e11]/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      {/* Top-left: Play Next */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePlayNext(item);
-                        }}
-                        className="absolute top-2.5 left-2.5 w-8 h-8 rounded-[6px] border border-white/15 hover:border-[#cfc6b0] bg-[#121316]/90 text-[#8f918c] hover:text-[#FAF8F5] flex items-center justify-center transition-all cursor-pointer shadow-md"
-                        title="Play Next in Queue"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      {/* Top-left: Play Next & Add to Crate */}
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayNext(item);
+                          }}
+                          className="w-8 h-8 rounded-[6px] border border-white/15 hover:border-[#cfc6b0] bg-[#121316]/90 text-[#8f918c] hover:text-[#FAF8F5] flex items-center justify-center transition-all cursor-pointer shadow-md"
+                          title="Play Next in Queue"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openAddToPlaylist(item);
+                          }}
+                          className="w-8 h-8 rounded-[6px] border border-white/15 hover:border-[#00f0ff] bg-[#121316]/90 text-[#8f918c] hover:text-[#00f0ff] flex items-center justify-center transition-all cursor-pointer shadow-md"
+                          title="Add to Crate / Playlist"
+                        >
+                          <FolderPlus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
                       {/* Top-right: Like / Vault */}
                       <button
@@ -446,6 +459,17 @@ function SongTrendsSection({
                     title="Play Next in Queue"
                   >
                     <Plus className="w-3 h-3" />
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openAddToPlaylist(item);
+                    }}
+                    className="p-1.5 rounded-[6px] border border-[#2b2f33] text-[#8f918c] hover:text-[#00f0ff] hover:border-[#00f0ff]/40 bg-transparent transition-all cursor-pointer"
+                    title="Add to Crate / Playlist"
+                  >
+                    <FolderPlus className="w-3 h-3" />
                   </button>
 
                   <span className="hidden md:inline text-[#8f918c]">

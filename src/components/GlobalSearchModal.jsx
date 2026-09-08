@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, X, Music, Radio, Play, 
-  Loader2, Disc3, Zap, Activity, Waves
+  Loader2, Disc3, Zap, Activity, Waves, FolderPlus, Heart
 } from 'lucide-react';
 import { streamResolver } from '../services/streaming/StreamResolver';
 import { formatTime } from '../utils/formatters';
+import { useAudio } from '../context/AudioContext';
 
 export default function GlobalSearchModal({
   isOpen,
@@ -13,6 +14,7 @@ export default function GlobalSearchModal({
   onPlayTrack,
   onSelectStation
 }) {
+  const { openAddToPlaylist, handleToggleLike, isLiked } = useAudio();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState({ curated: [], spotify: [], youtube: [], stations: [], allRanked: [], topMatch: null });
   const [isSearching, setIsSearching] = useState(false);
@@ -301,6 +303,30 @@ export default function GlobalSearchModal({
                       </div>
 
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleLike(results.topMatch);
+                          }}
+                          className={`w-9 h-9 rounded-[8px] border flex items-center justify-center transition-all cursor-pointer ${
+                            isLiked(results.topMatch.id || results.topMatch.title)
+                              ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/20'
+                              : 'border-white/15 text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/50'
+                          }`}
+                          title="Save to My Vault"
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${isLiked(results.topMatch.id || results.topMatch.title) ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openAddToPlaylist(results.topMatch);
+                          }}
+                          className="w-9 h-9 rounded-[8px] border border-white/15 hover:border-[#00f0ff] text-[#8f918c] hover:text-[#00f0ff] flex items-center justify-center transition-all cursor-pointer"
+                          title="Add to Crate / Playlist"
+                        >
+                          <FolderPlus className="w-3.5 h-3.5" />
+                        </button>
                         <div className="w-10 h-10 rounded-[10px] border border-[#00f0ff] bg-[#00f0ff]/15 group-hover:bg-[#00f0ff] group-hover:text-[#0c0d12] text-[#00f0ff] flex items-center justify-center transition-all shadow-md">
                           <Play className="w-4 h-4 fill-current translate-x-0.5" />
                         </div>
@@ -386,10 +412,34 @@ export default function GlobalSearchModal({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#9ca0a8]">
+                        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-[#9ca0a8] hidden sm:inline">
                             {formatTime(song.duration)}
                           </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleLike(song);
+                            }}
+                            className={`p-1.5 rounded-[6px] border transition-all cursor-pointer ${
+                              isLiked(song.id || song.title)
+                                ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/20'
+                                : 'border-white/15 text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40'
+                            }`}
+                            title="Save to My Vault"
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked(song.id || song.title) ? 'fill-current' : ''}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openAddToPlaylist(song);
+                            }}
+                            className="p-1.5 rounded-[6px] border border-white/15 hover:border-[#00f0ff] text-[#8f918c] hover:text-[#00f0ff] transition-all cursor-pointer"
+                            title="Add to Crate / Playlist"
+                          >
+                            <FolderPlus className="w-3 h-3" />
+                          </button>
                           <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/30 group-hover:border-[#00f0ff] group-hover:bg-[#00f0ff] group-hover:text-[#0c0d12] text-[#FAF8F5] flex items-center justify-center transition-all">
                             <Play className="w-3 h-3 fill-current translate-x-0.5" />
                           </div>
@@ -435,10 +485,34 @@ export default function GlobalSearchModal({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#9ca0a8]">
+                        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-[#9ca0a8] hidden sm:inline">
                             {formatTime(song.duration)}
                           </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleLike(song);
+                            }}
+                            className={`p-1.5 rounded-[6px] border transition-all cursor-pointer ${
+                              isLiked(song.id || song.title)
+                                ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/20'
+                                : 'border-white/15 text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40'
+                            }`}
+                            title="Save to My Vault"
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked(song.id || song.title) ? 'fill-current' : ''}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openAddToPlaylist(song);
+                            }}
+                            className="p-1.5 rounded-[6px] border border-white/15 hover:border-[#00f0ff] text-[#8f918c] hover:text-[#00f0ff] transition-all cursor-pointer"
+                            title="Add to Crate / Playlist"
+                          >
+                            <FolderPlus className="w-3 h-3" />
+                          </button>
                           <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                             <Play className="w-3 h-3 fill-current translate-x-0.5" />
                           </div>
@@ -484,10 +558,34 @@ export default function GlobalSearchModal({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#9ca0a8]">
+                        <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-[#9ca0a8] hidden sm:inline">
                             {formatTime(song.duration)}
                           </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleLike(song);
+                            }}
+                            className={`p-1.5 rounded-[6px] border transition-all cursor-pointer ${
+                              isLiked(song.id || song.title)
+                                ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/20'
+                                : 'border-white/15 text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40'
+                            }`}
+                            title="Save to My Vault"
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked(song.id || song.title) ? 'fill-current' : ''}`} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openAddToPlaylist(song);
+                            }}
+                            className="p-1.5 rounded-[6px] border border-white/15 hover:border-[#00f0ff] text-[#8f918c] hover:text-[#00f0ff] transition-all cursor-pointer"
+                            title="Add to Crate / Playlist"
+                          >
+                            <FolderPlus className="w-3 h-3" />
+                          </button>
                           <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#00f0ff] group-hover:bg-[#00f0ff] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                             <Play className="w-3 h-3 fill-current translate-x-0.5" />
                           </div>
@@ -529,12 +627,36 @@ export default function GlobalSearchModal({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0 ml-2">
                             {video.duration > 0 && (
-                              <span className="text-[10px] font-mono text-[#9ca0a8]">
+                              <span className="text-[10px] font-mono text-[#9ca0a8] hidden sm:inline">
                                 {formatTime(video.duration)}
                               </span>
                             )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleLike(video);
+                              }}
+                              className={`p-1.5 rounded-[6px] border transition-all cursor-pointer ${
+                                isLiked(video.id || video.title)
+                                  ? 'border-[#cfc6b0] text-[#cfc6b0] bg-[#cfc6b0]/20'
+                                  : 'border-white/15 text-[#8f918c] hover:text-[#FAF8F5] hover:border-[#cfc6b0]/40'
+                              }`}
+                              title="Save to My Vault"
+                            >
+                              <Heart className={`w-3 h-3 ${isLiked(video.id || video.title) ? 'fill-current' : ''}`} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAddToPlaylist(video);
+                              }}
+                              className="p-1.5 rounded-[6px] border border-white/15 hover:border-[#00f0ff] text-[#8f918c] hover:text-[#00f0ff] transition-all cursor-pointer"
+                              title="Add to Crate / Playlist"
+                            >
+                              <FolderPlus className="w-3 h-3" />
+                            </button>
                             <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                               {isResolving ? (
                                 <Loader2 className="w-3 h-3 animate-spin text-[#cfc6b0]" />

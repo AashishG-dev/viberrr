@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Settings, Radio, Sparkles, Heart, Plus } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Settings, Radio, Sparkles, Heart, Plus, FolderPlus } from 'lucide-react';
 import { formatTime } from '../utils/formatters';
 import { useAudio } from '../context/AudioContext';
 
@@ -22,7 +22,7 @@ export default function MasterListeningDeck({
   onToggleMute,
   onOpenAudioSource
 }) {
-  const { isLiked, handleToggleLike, spawnRadioFeed } = useAudio();
+  const { isLiked, handleToggleLike, spawnRadioFeed, openAddToPlaylist } = useAudio();
   const liked = isLiked(currentTrack?.id || currentTrack?.title);
 
   const progressPct = useMemo(() => {
@@ -182,6 +182,14 @@ export default function MasterListeningDeck({
                 >
                   <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-[#cfc6b0] text-[#cfc6b0]' : ''}`} />
                   <span>{liked ? 'SAVED' : 'SAVE TO VAULT'}</span>
+                </button>
+                <button
+                  onClick={() => openAddToPlaylist(currentTrack)}
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-[6px] border border-[#363a45] hover:border-[#00f0ff]/60 text-[10px] sm:text-[11px] font-mono text-[#C8CCD4] hover:text-[#00f0ff] bg-[#14161f] transition-all cursor-pointer"
+                  title="Add current track to an audio crate"
+                >
+                  <FolderPlus className="w-3.5 h-3.5 text-[#00f0ff]" />
+                  <span>+ CRATE</span>
                 </button>
                 <button
                   onClick={() => spawnRadioFeed(currentTrack)}

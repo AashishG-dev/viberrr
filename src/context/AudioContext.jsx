@@ -13,6 +13,8 @@ import { useLocalVault } from '../hooks/useLocalVault';
 import { streamResolver } from '../services/streaming/StreamResolver';
 import { AUDIO_SOURCES } from '../components/AudioSourceModal';
 import { copyShareLink } from '../utils/formatters';
+import AddToPlaylistModal from '../components/AddToPlaylistModal';
+import SharedCrateModal from '../components/SharedCrateModal';
 
 const AudioContext = createContext(null);
 
@@ -98,16 +100,45 @@ export function AudioProvider({ children }) {
     audioElement
   } = useAudioPlayer(currentStation?.songs || []);
 
-  // Client-Side Local Vault / Personalization Hook
+  // Client-Side Local Vault, Crates & Personalization Hook (Zero-Auth)
   const {
+    nodeId,
     vaultTracks,
     isLiked,
     toggleLike,
     clearVault,
-    exportVault,
-    importVault,
-    vaultCount
+    vaultCount,
+    playlists,
+    createPlaylist,
+    deletePlaylist,
+    renamePlaylist,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    cratesCount,
+    history,
+    recordHistory,
+    clearHistory,
+    generateShareUrl,
+    decodeShareUrl,
+    exportFullArchive,
+    importFullArchive
   } = useLocalVault();
+
+  // Add to Playlist modal state
+  const [isAddToPlaylistOpen, setIsAddToPlaylistOpen] = useState(false);
+  const [trackForPlaylist, setTrackForPlaylist] = useState(null);
+
+  const openAddToPlaylist = useCallback((track) => {
+    setTrackForPlaylist(track || currentTrack);
+    setIsAddToPlaylistOpen(true);
+  }, [currentTrack]);
+
+  // Automatic listening history logging
+  useEffect(() => {
+    if (isPlaying && currentTrack && currentTrack.title) {
+      recordHistory(currentTrack);
+    }
+  }, [isPlaying, currentTrack, recordHistory]);
 
   // Real-time Visualizer Frequency Spectrum Hook
   const { frequencies, audioLevel } = useAudioVisualizer(audioElement, isPlaying);
@@ -337,6 +368,22 @@ export function AudioProvider({ children }) {
     exportVault,
     importVault,
     vaultCount,
+    nodeId,
+    playlists,
+    createPlaylist,
+    deletePlaylist,
+    renamePlaylist,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    cratesCount,
+    history,
+    recordHistory,
+    clearHistory,
+    generateShareUrl,
+    decodeShareUrl,
+    exportFullArchive,
+    importFullArchive,
+    openAddToPlaylist,
     spawnRadioFeed,
     frequencies,
     audioLevel,
@@ -419,9 +466,23 @@ export function AudioProvider({ children }) {
     toggleLike,
     handleToggleLike,
     clearVault,
-    exportVault,
-    importVault,
     vaultCount,
+    nodeId,
+    playlists,
+    createPlaylist,
+    deletePlaylist,
+    renamePlaylist,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    cratesCount,
+    history,
+    recordHistory,
+    clearHistory,
+    generateShareUrl,
+    decodeShareUrl,
+    exportFullArchive,
+    importFullArchive,
+    openAddToPlaylist,
     spawnRadioFeed,
     frequencies,
     audioLevel,
@@ -441,7 +502,17 @@ export function AudioProvider({ children }) {
     handleToggleMinimalMode
   ]);
 
-  return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
+  return (
+    <AudioContext.Provider value={value}>
+      {children}
+      <AddToPlaylistModal
+        isOpen={isAddToPlaylistOpen}
+        onClose={() => setIsAddToPlaylistOpen(false)}
+        track={trackForPlaylist}
+      />
+      <SharedCrateModal />
+    </AudioContext.Provider>
+  );
 }
 
 export function useAudio() {
