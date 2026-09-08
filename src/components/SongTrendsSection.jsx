@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Search, Play, Pause, RefreshCw, Radio, 
-  Sparkles, ChevronDown, ChevronUp, Activity, Sliders, Heart, Plus, FolderPlus
+  Sparkles, ChevronDown, ChevronUp, Heart, Plus, FolderPlus
 } from 'lucide-react';
 import { trendsService } from '../services/streaming/TrendsService';
 import { STATIONS } from '../data/stationsData';

@@ -40,7 +40,7 @@ export default function HomePage() {
   } = useAudio();
 
   return (
-    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-24 sm:pt-28 pb-32 relative overflow-hidden flex flex-col items-center">
+    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-18 sm:pt-20 pb-32 relative overflow-hidden flex flex-col items-center">
       {/* Atlantic.vc Signature Wave Particle Cloud Background */}
       <ParticleCloudCanvas isPlaying={isPlaying} />
 

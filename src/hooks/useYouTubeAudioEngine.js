@@ -164,8 +164,15 @@ export function useYouTubeAudioEngine({
   }, [stopTimeSync]);
 
   const loadVideo = useCallback((videoId, autoPlay = true, duration = 240) => {
-    if (!videoId) return;
+    if (!videoId || typeof videoId !== 'string') return;
     const cleanId = videoId.replace(/^yt_/, '').trim();
+
+    // Security Gate: Enforce strict YouTube 11-character video ID regex to prevent injection & iframe breakout
+    if (!/^[a-zA-Z0-9_-]{11}$/.test(cleanId)) {
+      console.warn('Security: Refused to load malformed or unverified YouTube videoId:', cleanId);
+      return;
+    }
+
     currentVideoIdRef.current = cleanId;
 
     const host = getOrCreateHost();

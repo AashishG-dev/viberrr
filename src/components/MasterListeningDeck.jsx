@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Settings, Radio, Sparkles, Heart, Plus, FolderPlus } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Sliders, Radio, Sparkles, Heart, FolderPlus } from 'lucide-react';
 import { formatTime } from '../utils/formatters';
 import { useAudio } from '../context/AudioContext';
 
@@ -70,7 +70,7 @@ export default function MasterListeningDeck({
   const remainingWords = titleWords.slice(1).join(' ');
 
   return (
-    <section className="pt-8 pb-16 border-b border-[#2b2f33]/60 relative" id="live-deck">
+    <section className="pt-3 sm:pt-4 pb-16 border-b border-[#2b2f33]/60 relative" id="live-deck">
       
       {/* Minimal Top Telemetry Ribbon */}
       <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6 pb-2 border-b border-[#2b2f33]/40 font-mono text-[10px] tracking-[0.16em] uppercase">

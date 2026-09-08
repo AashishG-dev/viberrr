@@ -51,6 +51,68 @@ function getOrCreateNodeId() {
   }
 }
 
+/* ==========================================================================
+   SECURITY SANITIZATION SUITE (Zero-Trust Input Defense)
+   ========================================================================== */
+
+function sanitizeText(val, maxLen = 140, fallback = '') {
+  if (typeof val !== 'string') return fallback;
+  // Strip null bytes, non-printable control characters, and leading/trailing whitespace
+  const clean = val.replace(/[\u0000-\u0008\u000B-\u000C\u000E-\u001F\u007F]/g, '').trim();
+  return clean.slice(0, maxLen);
+}
+
+function sanitizeUrl(url, fallback = '') {
+  if (!url || typeof url !== 'string') return fallback;
+  const trimmed = url.trim();
+  // Strictly allow https://, http://, or relative internal paths (/...)
+  if (/^https?:\/\/[^\s<>"'`]+$/i.test(trimmed) || /^\/[a-zA-Z0-9_\-./%?&=]+$/.test(trimmed)) {
+    // Explicitly reject dangerous executable or script schemes
+    if (/^(javascript|data|vbscript|file|about|blob):/i.test(trimmed)) return fallback;
+    return trimmed;
+  }
+  return fallback;
+}
+
+function sanitizeHexColor(color, defaultColor = '#00f0ff') {
+  if (typeof color !== 'string') return defaultColor;
+  const trimmed = color.trim();
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed) ? trimmed : defaultColor;
+}
+
+function sanitizeVideoId(id) {
+  if (!id || typeof id !== 'string') return '';
+  const clean = id.replace(/^yt_/, '').trim();
+  return /^[a-zA-Z0-9_-]{11}$/.test(clean) ? clean : '';
+}
+
+function sanitizeTrack(t, idx = 0) {
+  if (!t || typeof t !== 'object') return null;
+  // Prevent Prototype Pollution
+  if (Object.prototype.hasOwnProperty.call(t, '__proto__') || Object.prototype.hasOwnProperty.call(t, 'constructor')) {
+    return null;
+  }
+
+  const title = sanitizeText(t.title, 140, 'Untitled Track');
+  const artist = sanitizeText(t.artist, 140, 'Viberr Artist');
+  const videoId = sanitizeVideoId(t.videoId);
+  const rawUrl = sanitizeUrl(t.url, '');
+  const thumbnail = sanitizeUrl(t.thumbnail, '/viberr-icon.svg');
+  const duration = typeof t.duration === 'number' && t.duration >= 0 && t.duration < 86400 ? Math.round(t.duration) : 210;
+
+  return {
+    id: sanitizeText(t.id, 64, `track_${idx}_${Date.now()}`),
+    title,
+    artist,
+    videoId,
+    url: videoId ? '' : rawUrl,
+    thumbnail,
+    duration,
+    isYouTubeEngine: Boolean(videoId),
+    addedAt: typeof t.addedAt === 'number' ? t.addedAt : Date.now()
+  };
+}
+
 /**
  * useLocalVault
  * Comprehensive Client-Side Music Management Engine (Zero-Auth Required):
@@ -169,14 +231,14 @@ export function useLocalVault() {
      ========================================================================== */
 
   const createPlaylist = useCallback((name, description = '', color = '#00f0ff') => {
-    const trimmed = (name || '').trim();
+    const trimmed = sanitizeText(name, 80, '');
     if (!trimmed) return null;
 
     const newCrate = {
-      id: `crate_${Date.now()}`,
+      id: `crate_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,
       name: trimmed,
-      description: description.trim() || 'Curated personal audio frequency.',
-      color: color || '#00f0ff',
+      description: sanitizeText(description, 280, 'Curated personal audio frequency.'),
+      color: sanitizeHexColor(color, '#00f0ff'),
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tracks: []
@@ -207,33 +269,30 @@ export function useLocalVault() {
   const addTrackToPlaylist = useCallback((playlistId, track) => {
     if (!playlistId || !track) return false;
 
+    const sanitized = sanitizeTrack(track);
+    if (!sanitized) return false;
+
     let added = false;
     setPlaylists((prev) =>
       prev.map((crate) => {
         if (crate.id !== playlistId) return crate;
 
         // Check if track is already in this playlist
-        const trackId = track.id || track.title;
-        const alreadyIn = crate.tracks.some((t) => (t.id && t.id === trackId) || t.title === track.title);
+        const trackId = sanitized.id || sanitized.title;
+        const alreadyIn = crate.tracks.some((t) => (t.id && t.id === trackId) || t.title === sanitized.title);
         if (alreadyIn) return crate;
 
-        added = true;
-        const normalized = {
-          id: track.id || `track_${Date.now()}`,
-          title: track.title || 'Untitled Track',
-          artist: track.artist || 'Viberr Artist',
-          thumbnail: track.thumbnail || '/viberr-icon.svg',
-          duration: track.duration || 210,
-          url: track.url || '',
-          videoId: track.videoId || '',
-          isYouTubeEngine: Boolean(track.isYouTubeEngine || track.videoId),
-          addedAt: Date.now()
-        };
+        // Limit tracks per playlist to prevent browser memory DoS
+        if (crate.tracks.length >= 250) {
+          console.warn('Playlist track limit reached (250 tracks)');
+          return crate;
+        }
 
+        added = true;
         return {
           ...crate,
           updatedAt: Date.now(),
-          tracks: [...crate.tracks, normalized]
+          tracks: [...crate.tracks, sanitized]
         };
       })
     );
@@ -324,36 +383,65 @@ export function useLocalVault() {
   }, []);
 
   /**
-   * Decodes a playlist from an encoded string
+   * Decodes a playlist from an encoded string with strict security boundary validation
    */
   const decodeShareUrl = useCallback((encodedStr) => {
-    if (!encodedStr) return null;
+    if (!encodedStr || typeof encodedStr !== 'string') return null;
+    // DoS Defense: Reject oversized strings (> 150KB) to prevent CPU starvation
+    if (encodedStr.length > 150000) {
+      console.warn('Security: Rejected oversized share_crate payload');
+      return null;
+    }
+
     try {
       const decodedJson = decodeURIComponent(
         Array.prototype.map
           .call(atob(decodeURIComponent(encodedStr)), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join('')
       );
-      const payload = JSON.parse(decodedJson);
-      if (!payload || !payload.n || !Array.isArray(payload.t)) return null;
+
+      // Safe parse with prototype pollution shield
+      const payload = JSON.parse(decodedJson, (key, value) => {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          return undefined;
+        }
+        return value;
+      });
+
+      if (!payload || typeof payload !== 'object' || !payload.n || !Array.isArray(payload.t)) return null;
+
+      const safeName = sanitizeText(payload.n, 80, 'Shared Crate');
+      const safeDesc = sanitizeText(payload.d, 280, 'Shared Crate from Viberr Network');
+      const safeColor = sanitizeHexColor(payload.c, '#00f0ff');
+
+      // Cap at 150 tracks maximum per shared crate
+      const safeTracks = payload.t
+        .slice(0, 150)
+        .map((t, idx) => {
+          if (!Array.isArray(t)) return null;
+          const videoId = sanitizeVideoId(t[2]);
+          const rawUrl = sanitizeUrl(t[3], '');
+          return {
+            id: `shared_${idx}_${Date.now()}`,
+            title: sanitizeText(t[0], 140, 'Unknown Track'),
+            artist: sanitizeText(t[1], 140, 'Viberr Artist'),
+            videoId,
+            url: videoId ? '' : rawUrl,
+            duration: typeof t[4] === 'number' && t[4] >= 0 && t[4] < 86400 ? Math.round(t[4]) : 210,
+            thumbnail: sanitizeUrl(t[5], '/viberr-icon.svg'),
+            isYouTubeEngine: Boolean(videoId)
+          };
+        })
+        .filter(Boolean);
 
       return {
-        name: payload.n,
-        description: payload.d || 'Shared Crate from Viberr Network',
-        color: payload.c || '#00f0ff',
-        tracks: payload.t.map((t, idx) => ({
-          id: `shared_${idx}_${Date.now()}`,
-          title: t[0] || 'Unknown Track',
-          artist: t[1] || 'Viberr Artist',
-          videoId: t[2] || '',
-          url: t[3] || '',
-          duration: t[4] || 210,
-          thumbnail: t[5] || '/viberr-icon.svg',
-          isYouTubeEngine: Boolean(t[2])
-        }))
+        name: safeName,
+        description: safeDesc,
+        color: safeColor,
+        tracks: safeTracks
       };
     } catch (e) {
-      console.warn('Failed to decode shared playlist:', e);
+      console.warn('Security: Failed to decode shared playlist:', e);
       return null;
     }
   }, []);
@@ -394,36 +482,69 @@ export function useLocalVault() {
 
   const importFullArchive = useCallback((jsonString) => {
     try {
-      const parsed = JSON.parse(jsonString);
-      if (!parsed) return false;
+      if (!jsonString || typeof jsonString !== 'string') return false;
+      // DoS Guard: Max 10MB payload size limit
+      if (jsonString.length > 10 * 1024 * 1024) {
+        console.warn('Security: Archive JSON exceeds maximum size limit (10MB)');
+        return false;
+      }
+
+      // Safe JSON Parse with Prototype Pollution Shield
+      const parsed = JSON.parse(jsonString, (key, value) => {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          return undefined;
+        }
+        return value;
+      });
+      if (!parsed || typeof parsed !== 'object') return false;
 
       // Handle full archive format
       if (parsed.playlists || parsed.vaultTracks) {
         if (Array.isArray(parsed.vaultTracks)) {
           setVaultTracks((prev) => {
             const existingMap = new Map(prev.map((t) => [t.id || t.title, t]));
-            parsed.vaultTracks.forEach((t) => {
-              if (t && t.title) existingMap.set(t.id || t.title, t);
+            // Cap imported tracks to 1000 items
+            parsed.vaultTracks.slice(0, 1000).forEach((t, idx) => {
+              const sanitized = sanitizeTrack(t, idx);
+              if (sanitized && sanitized.title) {
+                existingMap.set(sanitized.id || sanitized.title, sanitized);
+              }
             });
-            return Array.from(existingMap.values());
+            return Array.from(existingMap.values()).slice(0, 1500);
           });
         }
 
         if (Array.isArray(parsed.playlists)) {
           setPlaylists((prev) => {
             const existingMap = new Map(prev.map((p) => [p.id, p]));
-            parsed.playlists.forEach((p) => {
-              if (p && p.name) existingMap.set(p.id || `crate_${Date.now()}`, p);
+            // Cap imported crates to 50 items
+            parsed.playlists.slice(0, 50).forEach((p) => {
+              if (p && typeof p === 'object' && p.name) {
+                const crateId = sanitizeText(p.id, 64, `crate_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`);
+                const safeCrate = {
+                  id: crateId,
+                  name: sanitizeText(p.name, 80, 'Imported Crate'),
+                  description: sanitizeText(p.description, 280, 'Curated personal audio frequency.'),
+                  color: sanitizeHexColor(p.color, '#00f0ff'),
+                  createdAt: typeof p.createdAt === 'number' ? p.createdAt : Date.now(),
+                  updatedAt: Date.now(),
+                  tracks: Array.isArray(p.tracks)
+                    ? p.tracks.slice(0, 200).map((tr, idx) => sanitizeTrack(tr, idx)).filter(Boolean)
+                    : []
+                };
+                existingMap.set(crateId, safeCrate);
+              }
             });
-            return Array.from(existingMap.values());
+            return Array.from(existingMap.values()).slice(0, 60);
           });
         }
 
         if (Array.isArray(parsed.history)) {
           setHistory((prev) => {
             const existingMap = new Map(prev.map((h) => [h.title, h]));
-            parsed.history.forEach((h) => {
-              if (h && h.title) existingMap.set(h.title, h);
+            parsed.history.slice(0, 30).forEach((h, idx) => {
+              const sanitized = sanitizeTrack(h, idx);
+              if (sanitized && sanitized.title) existingMap.set(sanitized.title, sanitized);
             });
             return Array.from(existingMap.values()).slice(0, 30);
           });
@@ -435,17 +556,18 @@ export function useLocalVault() {
       if (Array.isArray(parsed)) {
         setVaultTracks((prev) => {
           const existingMap = new Map(prev.map((t) => [t.id || t.title, t]));
-          parsed.forEach((t) => {
-            if (t && t.title) existingMap.set(t.id || t.title, t);
+          parsed.slice(0, 500).forEach((t, idx) => {
+            const sanitized = sanitizeTrack(t, idx);
+            if (sanitized && sanitized.title) existingMap.set(sanitized.id || sanitized.title, sanitized);
           });
-          return Array.from(existingMap.values());
+          return Array.from(existingMap.values()).slice(0, 1000);
         });
         return true;
       }
 
       return false;
     } catch (e) {
-      console.warn('Failed to import archive:', e);
+      console.warn('Security: Failed to import archive safely:', e);
       return false;
     }
   }, []);

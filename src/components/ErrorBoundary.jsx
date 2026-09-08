@@ -45,10 +45,17 @@ export default class ErrorBoundary extends React.Component {
               An unexpected memory or audio pipeline fault was isolated by the fault mitigation harness.
             </p>
 
-            {/* Error Code Diagnostic */}
-            <div className="w-full p-3 rounded-[8px] bg-[#0d0e11] border border-[#2b2f33] font-mono text-[11px] text-red-400/90 text-left overflow-x-auto custom-scroll">
-              <code>{this.state.error?.message || 'ERR_MEMORY_FAULT_ISOLATED'}</code>
-            </div>
+            {/* Error Code Diagnostic (Sanitized in production to prevent sensitive information disclosure) */}
+            {import.meta.env.DEV ? (
+              <div className="w-full p-3 rounded-[8px] bg-[#0d0e11] border border-[#2b2f33] font-mono text-[11px] text-red-400/90 text-left overflow-x-auto custom-scroll">
+                <div className="text-[9px] text-[#8f918c] uppercase mb-1">[DEV DIAGNOSTIC]</div>
+                <code>{this.state.error?.message || 'ERR_MEMORY_FAULT_ISOLATED'}</code>
+              </div>
+            ) : (
+              <div className="w-full p-2.5 rounded-[8px] bg-[#0d0e11] border border-[#2b2f33] font-mono text-[10px] text-[#8f918c] text-center">
+                SIGNAL PROTOCOL: <span className="text-amber-400 font-bold">FAULT_ISOLATED // CODE_0x8F</span>
+              </div>
+            )}
 
             {/* Recovery Action */}
             <button

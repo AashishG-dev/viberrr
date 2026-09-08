@@ -225,6 +225,33 @@ function AppContent() {
     showToast
   ]);
 
+  // Standalone Popup Window Mode (?mode=mini)
+  if (isMinimalMode) {
+    return (
+      <main className="w-full h-screen bg-[#07070a] overflow-hidden select-none flex flex-col">
+        <FloatingMiniPlayer
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          isLoading={isLoading}
+          currentTime={currentTime}
+          duration={duration}
+          buffered={buffered}
+          isShuffled={isShuffled}
+          volume={volume}
+          isMuted={isMuted}
+          currentStation={currentStation}
+          onTogglePlay={togglePlay}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          onToggleShuffle={toggleShuffle}
+          onSeek={seek}
+          onToggleMute={toggleMute}
+          onClose={() => window.close()}
+        />
+      </main>
+    );
+  }
+
   return (
     <main
       className={`w-full min-h-screen relative bg-[#121316] select-none text-[#e3e2e6] flex flex-col items-center ${
@@ -397,6 +424,30 @@ function AppContent() {
           if (!isPlaying) togglePlay();
         }}
       />
+
+      {/* Always-On-Top Document PiP Floating Window Portal */}
+      {pipContainer && (
+        <FloatingMiniPlayer
+          container={pipContainer}
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          isLoading={isLoading}
+          currentTime={currentTime}
+          duration={duration}
+          buffered={buffered}
+          isShuffled={isShuffled}
+          volume={volume}
+          isMuted={isMuted}
+          currentStation={currentStation}
+          onTogglePlay={togglePlay}
+          onNextTrack={handleNextTrack}
+          onPrevTrack={handlePrevTrack}
+          onToggleShuffle={toggleShuffle}
+          onSeek={seek}
+          onToggleMute={toggleMute}
+          onClose={closePip}
+        />
+      )}
 
       {/* Security Threat Interception Modal */}
       <SecurityThreatModal />

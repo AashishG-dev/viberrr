@@ -24,7 +24,6 @@ export default function FloatingMiniPlayer({
   onToggleMute,
   onClose
 }) {
-  if (!container) return null;
 
   const safeDuration = duration > 0 ? duration : 100;
   const progressPercent = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100));
@@ -189,5 +188,8 @@ export default function FloatingMiniPlayer({
     </div>
   );
 
-  return createPortal(content, container);
+  if (container) {
+    return createPortal(content, container);
+  }
+  return content;
 }
