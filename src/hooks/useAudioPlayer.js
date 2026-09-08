@@ -35,6 +35,11 @@ export function useAudioPlayer(initialTracks = []) {
   );
 
   const handleNextTrackRef = useRef(null);
+  const playActionRef = useRef(null);
+  const pauseActionRef = useRef(null);
+  const nextActionRef = useRef(null);
+  const prevActionRef = useRef(null);
+  const seekActionRef = useRef(null);
 
   // Seamless YouTube Headless Audio Engine Bridge
   const ytEngine = useYouTubeAudioEngine({
@@ -43,6 +48,15 @@ export function useAudioPlayer(initialTracks = []) {
     },
     onTimeUpdate: (t) => {
       setCurrentTime(t);
+      if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && duration > 0) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: Math.max(t, duration),
+            playbackRate: 1,
+            position: Math.min(t, duration)
+          });
+        } catch (e) {}
+      }
     },
     onStateChange: (playing) => {
       setIsPlaying(playing);
@@ -164,24 +178,38 @@ export function useAudioPlayer(initialTracks = []) {
   // MediaSession integration
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title || 'Viberr Radio',
-        artist: currentTrack.artist || 'Viberr Live Stream',
-        album: isLiveStream ? '24/7 Global Web Stream' : (currentTrack.album || 'Viberr Lossless Sessions'),
-        artwork: [
-          { src: currentTrack.thumbnail || '/favicon.svg', sizes: '512x512', type: 'image/png' }
-        ]
-      });
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title || 'Viberr Radio',
+          artist: currentTrack.artist || 'Viberr Live Stream',
+          album: isLiveStream ? '24/7 Global Web Stream' : (currentTrack.album || 'Viberr Lossless Sessions'),
+          artwork: [
+            { src: currentTrack.thumbnail || '/favicon.svg', sizes: '512x512', type: 'image/png' }
+          ]
+        });
 
-      navigator.mediaSession.setActionHandler('play', () => togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-      navigator.mediaSession.setActionHandler('previoustrack', () => handlePrevTrack());
-      navigator.mediaSession.setActionHandler('nexttrack', () => handleNextTrack());
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime !== undefined) seek(details.seekTime);
-      });
+        navigator.mediaSession.setActionHandler('play', () => playActionRef.current?.());
+        navigator.mediaSession.setActionHandler('pause', () => pauseActionRef.current?.());
+        navigator.mediaSession.setActionHandler('stop', () => pauseActionRef.current?.());
+        navigator.mediaSession.setActionHandler('previoustrack', () => prevActionRef.current?.());
+        navigator.mediaSession.setActionHandler('nexttrack', () => nextActionRef.current?.());
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime !== undefined) seekActionRef.current?.(details.seekTime);
+        });
+      } catch (e) {
+        console.warn('MediaSession metadata error:', e);
+      }
     }
   }, [currentTrack, isLiveStream]);
+
+  // Keep OS Lockscreen / Notification PlaybackState in lockstep
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+      } catch (e) {}
+    }
+  }, [isPlaying]);
 
   // Station Switching Handler
   const setStationTracks = useCallback((newTracks, shouldAutoPlay = false) => {
@@ -405,51 +433,66 @@ export function useAudioPlayer(initialTracks = []) {
 
   const lastActionTimeRef = useRef(0);
 
-  const togglePlay = useCallback(() => {
+  const pause = useCallback(() => {
     if (isCurrentTrackYouTube) {
-      if (isPlaying) {
-        ytEngine.pauseVideo();
-        setIsPlaying(false);
-      } else {
-        ytEngine.playVideo();
-        setIsPlaying(true);
-      }
+      ytEngine.pauseVideo();
+      setIsPlaying(false);
+      return;
+    }
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      setIsPlaying(false);
+    }
+  }, [isCurrentTrackYouTube, ytEngine]);
+
+  const play = useCallback(() => {
+    if (isCurrentTrackYouTube) {
+      ytEngine.playVideo();
+      setIsPlaying(true);
       return;
     }
 
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      if (currentTrack?.url) {
-        audio.volume = isMuted ? 0 : volume;
-        if (!audio.src || audio.src === window.location.href || !audio.src.endsWith(currentTrack.url.slice(-15))) {
-          audio.src = currentTrack.url;
-          audio.load();
-        }
-        setIsLoading(true);
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-              setIsLoading(false);
-            })
-            .catch((err) => {
-              console.warn('Audio play error:', err);
-              setIsLoading(false);
-              setIsPlaying(false);
-            });
-        }
-      } else if (currentTrack) {
-        // If current track doesn't have a direct URL, resolve and play full-length song!
-        playDirectTrack(currentTrack, tracks);
+    if (currentTrack?.url) {
+      audio.volume = isMuted ? 0 : volume;
+      if (!audio.src || audio.src === window.location.href || !audio.src.endsWith(currentTrack.url.slice(-15))) {
+        audio.src = currentTrack.url;
+        audio.load();
       }
+      setIsLoading(true);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            setIsLoading(false);
+          })
+          .catch((err) => {
+            console.warn('Audio play error:', err);
+            setIsLoading(false);
+            setIsPlaying(false);
+          });
+      }
+    } else if (currentTrack) {
+      // If current track doesn't have a direct URL, resolve and play full-length song!
+      playDirectTrack(currentTrack, tracks);
     }
-  }, [isPlaying, currentTrack, isCurrentTrackYouTube, ytEngine, isMuted, volume, playDirectTrack, tracks]);
+  }, [isCurrentTrackYouTube, ytEngine, currentTrack, isMuted, volume, playDirectTrack, tracks]);
+
+  const togglePlay = useCallback(() => {
+    if (isPlaying) {
+      pause();
+    } else {
+      play();
+    }
+  }, [isPlaying, pause, play]);
+
+  // Keep action refs updated
+  playActionRef.current = play;
+  pauseActionRef.current = pause;
 
   const addToUserQueue = useCallback((track) => {
     if (!track) return;
@@ -487,6 +530,7 @@ export function useAudioPlayer(initialTracks = []) {
   }, [userQueue, tracks, isLiveStream, currentTrackIndex, playDirectTrack, playTrackAtIndex]);
 
   handleNextTrackRef.current = handleNextTrack;
+  nextActionRef.current = handleNextTrack;
 
   const handlePrevTrack = useCallback(() => {
     if (tracks.length === 0 || isLiveStream) return;
@@ -506,6 +550,8 @@ export function useAudioPlayer(initialTracks = []) {
     playTrackAtIndex(prevIdx);
   }, [tracks, currentTrackIndex, isLiveStream, currentTime, isCurrentTrackYouTube, ytEngine, playTrackAtIndex]);
 
+  prevActionRef.current = handlePrevTrack;
+
   const selectTrack = useCallback((index) => {
     playTrackAtIndex(index);
   }, [playTrackAtIndex]);
@@ -522,6 +568,8 @@ export function useAudioPlayer(initialTracks = []) {
       audio.currentTime = time;
     }
   }, [isCurrentTrackYouTube, ytEngine]);
+
+  seekActionRef.current = seek;
 
   const changeVolume = useCallback((val) => {
     const clamped = Math.max(0, Math.min(1, val));
@@ -574,6 +622,8 @@ export function useAudioPlayer(initialTracks = []) {
     isLiveStream,
     isCurrentTrackYouTube,
     togglePlay,
+    play,
+    pause,
     handleNextTrack,
     handlePrevTrack,
     selectTrack,

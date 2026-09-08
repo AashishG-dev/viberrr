@@ -244,8 +244,8 @@ function SongTrendsSection({
 
       {/* Loading Skeleton */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-4">
-          {[...Array(8)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 trend-adaptive-grid gap-6 py-4">
+          {[...Array(10)].map((_, i) => (
             <div key={i} className="p-5 rounded-[16px] bg-[#121316] border border-[#2b2f33] animate-pulse flex flex-col gap-3">
               <div className="aspect-square w-full rounded-[10px] bg-[#1b1b1f]" />
               <div className="h-4 bg-[#1b1b1f] rounded w-3/4" />
@@ -278,7 +278,7 @@ function SongTrendsSection({
 
       {/* Matrix Cards View (Atlantic.vc 3/4 Column Wireframe Grid) */}
       {!isLoading && viewMode === 'grid' && displayedTracks.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="trendTracksGrid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 trend-adaptive-grid gap-4 sm:gap-6" id="trendTracksGrid">
           {displayedTracks.map((item, idx) => {
             const isCurrentlyPlaying = currentTrack?.title === item.title && isPlaying;
             const liked = isLiked(item.id || item.title);
@@ -286,25 +286,25 @@ function SongTrendsSection({
               <article
                 key={item.id || idx}
                 onClick={() => handleTrackClick(item)}
-                className={`group flex flex-col justify-between p-5 rounded-[16px] bg-[#121316] hover:bg-[#1b1b1f] border transition-all duration-200 cursor-pointer relative ${
+                className={`group flex flex-col justify-between p-4 sm:p-5 rounded-[16px] section-surface-card hover:bg-[#181b24] border transition-all duration-200 cursor-pointer relative shadow-lg ${
                   isCurrentlyPlaying
-                    ? 'border-[#00f0ff] shadow-[0_0_20px_rgba(0,240,255,0.15)]'
-                    : 'border-[#cfc6b0]/20 hover:border-[#cfc6b0]/50'
+                    ? 'border-[#00f0ff] shadow-[0_0_24px_rgba(0,240,255,0.2)]'
+                    : 'border-[#cfc6b0]/25 hover:border-[#cfc6b0]/60'
                 }`}
               >
                 {/* CAD Telemetry Tag */}
-                <div className="flex items-center justify-between mb-3 text-[9px] font-mono tracking-[0.16em] uppercase text-[#8f918c]">
-                  <span className="text-[#cfc6b0]">#{String(idx + 1).padStart(2, '0')} // NODE</span>
-                  <span className="text-[#00f0ff]">FLAC 24-BIT</span>
+                <div className="flex items-center justify-between mb-3 text-[9px] font-mono tracking-[0.16em] uppercase text-[#9ca0a8]">
+                  <span className="text-[#cfc6b0] font-semibold">#{String(idx + 1).padStart(2, '0')} // NODE</span>
+                  <span className="text-[#00f0ff] font-semibold bg-[#00f0ff]/10 px-1.5 py-0.5 rounded-[4px] border border-[#00f0ff]/20">FLAC 24-BIT</span>
                 </div>
 
                 <div>
                   {/* Artwork Preview Frame with Hairline Border */}
-                  <div className="relative aspect-square w-full rounded-[10px] overflow-hidden mb-4 bg-[#0d0e11] border border-white/5">
+                  <div className="relative aspect-square w-full rounded-[12px] overflow-hidden mb-3.5 bg-[#090a0d] border border-white/10 shadow-inner">
                     <img
                       src={item.thumbnail}
                       alt={item.title}
-                      className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                      className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&q=80';
                       }}
@@ -341,38 +341,38 @@ function SongTrendsSection({
                       </button>
 
                       {/* Center: Play / Pause */}
-                      <div className="w-11 h-11 rounded-[8px] border border-[#cfc6b0] bg-[#121316] text-[#FAF8F5] flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
+                      <div className="w-12 h-12 rounded-[10px] border border-[#cfc6b0] bg-[#14161f] text-[#FAF8F5] flex items-center justify-center shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
                         {isCurrentlyPlaying ? (
-                          <Pause className="w-4 h-4 fill-current text-[#00f0ff]" />
+                          <Pause className="w-5 h-5 fill-current text-[#00f0ff]" />
                         ) : (
-                          <Play className="w-4 h-4 fill-current ml-0.5 text-[#cfc6b0]" />
+                          <Play className="w-5 h-5 fill-current ml-0.5 text-[#cfc6b0]" />
                         )}
                       </div>
                     </div>
                   </div>
 
                   {/* Track Titles */}
-                  <h3 className="font-space text-sm text-[#FAF8F5] font-normal leading-snug line-clamp-1 group-hover:text-[#cfc6b0] transition-colors mb-1">
+                  <h3 className="font-space text-sm text-[#FFFFFF] font-medium leading-snug line-clamp-1 group-hover:text-[#00f0ff] transition-colors mb-1">
                     {item.title}
                   </h3>
 
-                  <p className="font-mono text-xs text-[#8f918c] line-clamp-1 mb-3">
+                  <p className="font-mono text-xs text-[#C4C8D0] line-clamp-1 mb-3">
                     {item.artist}
                   </p>
                 </div>
 
                 {/* Card Footer with Outlined Action Trigger */}
-                <div className="pt-3 border-t border-[#2b2f33] flex items-center justify-between font-mono text-[10px]">
-                  <span className="text-[#8f918c] tracking-wider">
+                <div className="pt-3 border-t border-[#262832] flex items-center justify-between font-mono text-[10px]">
+                  <span className="text-[#9ca0a8] tracking-wider">
                     {item.streams ? item.streams.replace(/views|streams/i, 'DISPATCHES') : '1411 KBPS'}
                   </span>
 
-                  <span className={`px-2.5 py-1 rounded-[6px] border text-[9px] uppercase tracking-[0.14em] transition-all ${
+                  <span className={`px-2.5 py-1 rounded-[6px] border text-[9px] uppercase tracking-[0.14em] transition-all font-semibold ${
                     isCurrentlyPlaying
-                      ? 'border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/10'
-                      : 'border-[#cfc6b0]/30 text-[#FAF8F5] group-hover:border-[#cfc6b0] group-hover:text-[#cfc6b0]'
+                      ? 'border-[#00f0ff] text-[#00f0ff] bg-[#00f0ff]/15 shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                      : 'border-[#cfc6b0]/35 text-[#FAF8F5] group-hover:border-[#FAF8F5] group-hover:text-[#FFFFFF]'
                   }`}>
-                    {isCurrentlyPlaying ? 'TRANSMITTING' : 'INITIALIZE'}
+                    {isCurrentlyPlaying ? 'TRANSMITTING' : 'PLAY DIRECT'}
                   </span>
                 </div>
               </article>

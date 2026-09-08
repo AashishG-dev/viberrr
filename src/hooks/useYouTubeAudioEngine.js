@@ -56,53 +56,78 @@ export function useYouTubeAudioEngine({
       host.id = 'viberr-yt-host';
       host.style.cssText = [
         'position: fixed',
-        'bottom: 84px',
-        'right: 16px',
-        'width: 280px',
-        'height: 160px',
+        'bottom: 74px',
+        'right: 12px',
+        'width: 136px',
+        'height: 82px',
         'z-index: 45',
-        'border-radius: 12px',
+        'border-radius: 8px',
         'overflow: hidden',
-        'box-shadow: 0 12px 36px rgba(0,0,0,0.85)',
-        'border: 1px solid #343538',
+        'box-shadow: 0 8px 24px rgba(0,0,0,0.85)',
+        'border: 1px solid #2b2f33',
         'background: #0d0e11',
         'display: none',
-        'transition: transform 0.3s ease, opacity 0.3s ease'
+        'transition: width 0.2s ease, height 0.2s ease, transform 0.2s ease'
       ].join(';');
 
-      // Inner header with close/minimize button
+      // Sleek micro header with minimize and hide controls
       const header = document.createElement('div');
       header.id = 'viberr-yt-header';
       header.style.cssText = [
-        'height: 24px',
-        'background: #1b1b1f',
+        'height: 20px',
+        'background: #15161a',
         'display: flex',
         'align-items: center',
         'justify-content: space-between',
-        'padding: 0 8px',
+        'padding: 0 6px',
         'font-family: monospace',
-        'font-size: 9px',
+        'font-size: 8.5px',
         'color: #cfc6b0',
-        'border-bottom: 1px solid #343538',
+        'border-bottom: 1px solid #262830',
         'user-select: none'
       ].join(';');
       header.innerHTML = `
-        <span style="font-weight:bold;letter-spacing:0.5px">▶ YOUTUBE FULL ENGINE</span>
-        <button id="viberr-yt-toggle-btn" style="background:none;border:none;color:#8f918c;cursor:pointer;font-size:11px;font-family:monospace">✕</button>
+        <span style="font-weight:600;letter-spacing:0.5px;display:flex;align-items:center;gap:4px">
+          <span style="width:4px;height:4px;border-radius:50%;background:#00f0ff;display:inline-block"></span>YT FEED
+        </span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button id="viberr-yt-min-btn" title="Minimize / Expand" style="background:none;border:none;color:#8f918c;cursor:pointer;font-size:10px;padding:0 2px;font-family:monospace;line-height:1">_</button>
+          <button id="viberr-yt-toggle-btn" title="Hide video dock" style="background:none;border:none;color:#8f918c;cursor:pointer;font-size:9px;padding:0 2px;font-family:monospace;line-height:1">✕</button>
+        </div>
       `;
       host.appendChild(header);
 
       const frameContainer = document.createElement('div');
       frameContainer.id = 'viberr-yt-frame-container';
-      frameContainer.style.cssText = 'width:100%;height:calc(100% - 24px);position:relative;background:#000;';
+      frameContainer.style.cssText = 'width:100%;height:calc(100% - 20px);position:relative;background:#000;';
       host.appendChild(frameContainer);
 
       document.body.appendChild(host);
 
-      // Handle close/dock toggle
-      const btn = header.querySelector('#viberr-yt-toggle-btn');
-      if (btn) {
-        btn.onclick = () => {
+      // Handle minimize / expand toggle
+      let isHostMinimized = false;
+      const minBtn = header.querySelector('#viberr-yt-min-btn');
+      if (minBtn) {
+        minBtn.onclick = (e) => {
+          e.stopPropagation();
+          isHostMinimized = !isHostMinimized;
+          if (isHostMinimized) {
+            host.style.height = '20px';
+            host.style.width = '100px';
+            minBtn.textContent = '□';
+          } else {
+            host.style.height = '82px';
+            host.style.width = '136px';
+            minBtn.textContent = '_';
+          }
+        };
+      }
+
+      // Handle hide button
+      const closeBtn = header.querySelector('#viberr-yt-toggle-btn');
+      if (closeBtn) {
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
           host.style.display = 'none';
         };
       }

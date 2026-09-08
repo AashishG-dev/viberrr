@@ -18,10 +18,61 @@ class StreamResolver {
   }
 
   /**
-   * Search all sources simultaneously
+   * Calculate smart relevancy score for a track against a query
+   */
+  scoreRelevance(track, query) {
+    if (!track || !query) return 0;
+    const q = query.toLowerCase().trim();
+    const title = (track.title || '').toLowerCase().trim();
+    const artist = (track.artist || '').toLowerCase().trim();
+
+    let score = 0;
+
+    // Exact matches
+    if (title === q) score += 120;
+    else if (title.startsWith(q)) score += 85;
+    else if (title.includes(q)) score += 50;
+
+    if (artist === q) score += 60;
+    else if (artist.startsWith(q)) score += 40;
+    else if (artist.includes(q)) score += 25;
+
+    // Token matches for multi-word queries like "Let her go", "Never fold"
+    const qTokens = q.split(/\s+/).filter(Boolean);
+    let matchedTokens = 0;
+    for (const token of qTokens) {
+      if (title.includes(token)) {
+        score += 20;
+        matchedTokens++;
+      }
+      if (artist.includes(token)) {
+        score += 12;
+        matchedTokens++;
+      }
+    }
+
+    if (qTokens.length > 1 && matchedTokens >= qTokens.length) {
+      score += 35;
+    }
+
+    // High quality stream bonuses
+    if (track.source === 'curated' || (track.url && track.url.includes('r2.dev'))) {
+      score += 15;
+    }
+    if (track.videoId) {
+      score += 10;
+    }
+
+    return score;
+  }
+
+  /**
+   * Search all sources simultaneously with Smart Unified Relevancy
    */
   async searchGlobal(query) {
-    if (!query || !query.trim()) return { curated: [], spotify: [], youtube: [], stations: [] };
+    if (!query || !query.trim()) {
+      return { curated: [], spotify: [], youtube: [], stations: [], allRanked: [], topMatch: null };
+    }
     const q = query.toLowerCase().trim();
 
     // 1. Search Curated Library (if Lossless CDN plugin is enabled)
@@ -56,20 +107,47 @@ class StreamResolver {
       st.tagline?.toLowerCase().includes(q)
     ).slice(0, 6);
 
-    // 3. Search Spotify & YouTube conditionally based on Plugin status
+    // 3. Search Spotify & YouTube concurrently with resilient Promise.allSettled
     const isSpotifyEnabled = pluginManager.isPluginEnabled('spotify-provider');
     const isYouTubeEnabled = pluginManager.isPluginEnabled('youtube-streaming');
 
-    const [spotifyMatches, youtubeMatches] = await Promise.all([
-      isSpotifyEnabled ? spotifyProvider.search(query, 15).catch(() => []) : Promise.resolve([]),
-      isYouTubeEnabled ? youtubeProvider.search(query, 12).catch(() => []) : Promise.resolve([])
+    const results = await Promise.allSettled([
+      isSpotifyEnabled ? spotifyProvider.search(query, 16) : Promise.resolve([]),
+      isYouTubeEnabled ? youtubeProvider.search(query, 14) : Promise.resolve([])
     ]);
+
+    const spotifyMatches = results[0].status === 'fulfilled' && Array.isArray(results[0].value) ? results[0].value : [];
+    const youtubeMatches = results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : [];
+
+    // 4. Unified Relevancy Ranking & Deduplication
+    const rawPool = [...curatedMatches, ...spotifyMatches, ...youtubeMatches];
+    const scoredMap = new Map();
+
+    for (const item of rawPool) {
+      if (!item || !item.title) continue;
+      const score = this.scoreRelevance(item, q);
+      const cleanTitle = item.title.toLowerCase().replace(/[^\w]/g, '').slice(0, 15);
+      const cleanArtist = (item.artist || '').toLowerCase().replace(/[^\w]/g, '').slice(0, 8);
+      const dedupKey = `${cleanTitle}_${cleanArtist}`;
+
+      if (!scoredMap.has(dedupKey) || score > scoredMap.get(dedupKey).relevanceScore) {
+        scoredMap.set(dedupKey, { ...item, relevanceScore: score });
+      }
+    }
+
+    const allRanked = Array.from(scoredMap.values()).sort(
+      (a, b) => b.relevanceScore - a.relevanceScore
+    );
+
+    const topMatch = allRanked.length > 0 && allRanked[0].relevanceScore > 40 ? allRanked[0] : (allRanked[0] || null);
 
     return {
       curated: curatedMatches,
       spotify: spotifyMatches,
       youtube: youtubeMatches,
-      stations: stationMatches
+      stations: stationMatches,
+      allRanked,
+      topMatch
     };
   }
 

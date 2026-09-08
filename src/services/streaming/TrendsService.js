@@ -6,6 +6,7 @@
  * 3. High-Fidelity verified fallbacks for instant offline/cold-start playback
  */
 import { youtubeProvider } from './YouTubeInvidiousProvider';
+import { spotifyProvider } from './SpotifyProvider';
 
 const FALLBACK_TRENDS = [
   {
@@ -115,30 +116,63 @@ class TrendsService {
       return this.cache.get(cacheKey);
     }
 
-    // 1. Internal live search query: Search YouTube via Piped for full songs
+    // 1. Internal live search query: Search YouTube & Spotify for full songs
     if (searchQuery && searchQuery.trim()) {
       try {
-        const ytResults = await youtubeProvider.search(searchQuery.trim(), 24);
-        if (ytResults && ytResults.length > 0) {
-          const list = ytResults.map((yt, idx) => ({
-            id: yt.id,
-            videoId: yt.videoId,
-            rank: idx + 1,
-            title: yt.title,
-            artist: yt.artist,
-            album: 'YouTube Full Track',
-            duration: yt.duration || 210,
-            thumbnail: yt.thumbnail,
-            url: '',
-            isYouTubeEngine: true,
-            isFullTrack: true,
-            source: 'youtube',
-            sourceLabel: 'YouTube Full Song',
-            streams: `${Math.floor(20 + Math.random() * 80)}M Views`,
-            badge: idx < 3 ? `🔥 Top #${idx + 1}` : 'Live Search'
-          }));
-          this.cache.set(cacheKey, list);
-          return list;
+        const [ytResults, spotResults] = await Promise.allSettled([
+          youtubeProvider.search(searchQuery.trim(), 20),
+          spotifyProvider.search(searchQuery.trim(), 15)
+        ]);
+
+        const yts = ytResults.status === 'fulfilled' && Array.isArray(ytResults.value) ? ytResults.value : [];
+        const spots = spotResults.status === 'fulfilled' && Array.isArray(spotResults.value) ? spotResults.value : [];
+
+        const combined = [];
+        if (yts.length > 0) {
+          yts.forEach((yt, idx) => {
+            combined.push({
+              id: yt.id,
+              videoId: yt.videoId,
+              rank: idx + 1,
+              title: yt.title,
+              artist: yt.artist,
+              album: 'YouTube Full Track',
+              duration: yt.duration || 210,
+              thumbnail: yt.thumbnail,
+              url: '',
+              isYouTubeEngine: true,
+              isFullTrack: true,
+              source: 'youtube',
+              sourceLabel: 'YouTube Full Song',
+              streams: `${Math.floor(20 + Math.random() * 80)}M Views`,
+              badge: idx < 3 ? `🔥 Top #${idx + 1}` : 'Live Search'
+            });
+          });
+        }
+
+        if (spots.length > 0) {
+          spots.forEach((sp) => {
+            combined.push({
+              id: sp.id,
+              trackId: sp.trackId,
+              rank: combined.length + 1,
+              title: sp.title,
+              artist: sp.artist,
+              album: sp.album || 'Studio Master',
+              duration: sp.duration || 210,
+              thumbnail: sp.thumbnail,
+              url: '',
+              source: 'spotify',
+              sourceLabel: 'Master Repertory',
+              streams: '100M+ Plays',
+              badge: '✨ Global Catalog'
+            });
+          });
+        }
+
+        if (combined.length > 0) {
+          this.cache.set(cacheKey, combined);
+          return combined;
         }
       } catch (e) {
         console.warn('Live search error:', e);

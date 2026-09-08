@@ -14,9 +14,9 @@ export default function GlobalSearchModal({
   onSelectStation
 }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState({ curated: [], spotify: [], youtube: [], stations: [] });
+  const [results, setResults] = useState({ curated: [], spotify: [], youtube: [], stations: [], allRanked: [], topMatch: null });
   const [isSearching, setIsSearching] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'curated' | 'spotify' | 'youtube' | 'stations'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'spotify' | 'youtube' | 'curated' | 'stations'
   const [resolvingId, setResolvingId] = useState(null);
   const inputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
@@ -27,14 +27,14 @@ export default function GlobalSearchModal({
       setTimeout(() => inputRef.current?.focus(), 80);
     } else {
       setQuery('');
-      setResults({ curated: [], spotify: [], youtube: [], stations: [] });
+      setResults({ curated: [], spotify: [], youtube: [], stations: [], allRanked: [], topMatch: null });
     }
   }, [isOpen]);
 
   // Debounced search
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ curated: [], spotify: [], youtube: [], stations: [] });
+      setResults({ curated: [], spotify: [], youtube: [], stations: [], allRanked: [], topMatch: null });
       setIsSearching(false);
       return;
     }
@@ -48,7 +48,9 @@ export default function GlobalSearchModal({
         curated: data.curated || [],
         spotify: data.spotify || [],
         youtube: data.youtube || [],
-        stations: data.stations || []
+        stations: data.stations || [],
+        allRanked: data.allRanked || [],
+        topMatch: data.topMatch || null
       });
       setIsSearching(false);
     }, 280);
@@ -82,11 +84,13 @@ export default function GlobalSearchModal({
       };
 
       // Collect all related tracks from current search results to prime the queue
-      const currentPool = [
-        ...(results.spotify || []),
-        ...(results.curated || []),
-        ...(results.youtube || [])
-      ];
+      const currentPool = results.allRanked?.length > 0
+        ? results.allRanked
+        : [
+            ...(results.spotify || []),
+            ...(results.curated || []),
+            ...(results.youtube || [])
+          ];
 
       onPlayTrack(playable, currentPool);
       onClose();
@@ -95,11 +99,12 @@ export default function GlobalSearchModal({
     }
   };
 
-  const totalResults =
+  const totalResults = results.allRanked?.length || (
     (results.curated?.length || 0) +
     (results.spotify?.length || 0) +
     (results.youtube?.length || 0) +
-    (results.stations?.length || 0);
+    (results.stations?.length || 0)
+  );
 
   return (
     <AnimatePresence>
@@ -171,62 +176,62 @@ export default function GlobalSearchModal({
             </div>
           </div>
 
-          {/* Node Category Filter Tabs */}
+          {/* Category Filter Tabs */}
           {query.trim() && (
             <div className="flex items-center gap-2 pt-3 pb-2 overflow-x-auto custom-scroll flex-shrink-0 text-xs font-mono">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 ${
                   activeTab === 'all'
                     ? 'wireframe-btn-cyan font-bold'
                     : 'wireframe-btn opacity-60 hover:opacity-100'
                 }`}
               >
-                00 ALL NODES ({totalResults})
+                ALL RESULTS ({totalResults})
               </button>
               <button
                 onClick={() => setActiveTab('spotify')}
-                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
                   activeTab === 'spotify'
                     ? 'wireframe-btn-accent font-bold'
                     : 'wireframe-btn opacity-60 hover:opacity-100'
                 }`}
               >
                 <Activity className="w-3 h-3 text-[#cfc6b0]" />
-                <span>01 NEURAL RADAR ({results.spotify?.length || 0})</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('curated')}
-                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'curated'
-                    ? 'wireframe-btn-accent font-bold'
-                    : 'wireframe-btn opacity-60 hover:opacity-100'
-                }`}
-              >
-                <Zap className="w-3 h-3 text-[#00f0ff]" />
-                <span>02 LOSSLESS DIRECT ({results.curated?.length || 0})</span>
+                <span>GLOBAL SONGS ({results.spotify?.length || 0})</span>
               </button>
               <button
                 onClick={() => setActiveTab('youtube')}
-                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
                   activeTab === 'youtube'
                     ? 'wireframe-btn-accent font-bold'
                     : 'wireframe-btn opacity-60 hover:opacity-100'
                 }`}
               >
                 <Waves className="w-3 h-3 text-[#FAF8F5]" />
-                <span>03 SOVEREIGN AIRPLAY ({results.youtube?.length || 0})</span>
+                <span>YOUTUBE FULL ({results.youtube?.length || 0})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('curated')}
+                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
+                  activeTab === 'curated'
+                    ? 'wireframe-btn-accent font-bold'
+                    : 'wireframe-btn opacity-60 hover:opacity-100'
+                }`}
+              >
+                <Zap className="w-3 h-3 text-[#00f0ff]" />
+                <span>LOSSLESS CDN ({results.curated?.length || 0})</span>
               </button>
               <button
                 onClick={() => setActiveTab('stations')}
-                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 flex-shrink-0 ${
                   activeTab === 'stations'
                     ? 'wireframe-btn-accent font-bold'
                     : 'wireframe-btn opacity-60 hover:opacity-100'
                 }`}
               >
                 <Radio className="w-3 h-3 text-[#cfc6b0]" />
-                <span>04 RESONANCE STATIONS ({results.stations?.length || 0})</span>
+                <span>STATIONS ({results.stations?.length || 0})</span>
               </button>
             </div>
           )}
@@ -234,27 +239,77 @@ export default function GlobalSearchModal({
           {/* Results List */}
           <div className="flex-1 overflow-y-auto mt-2 pr-1 space-y-2.5 custom-scroll min-h-[260px] max-h-[56vh]">
             {!query.trim() ? (
-              <div className="py-14 text-center text-[#FAF8F5]/40 space-y-2">
-                <Music className="w-8 h-8 mx-auto text-[#cfc6b0]/40 animate-pulse" />
-                <p className="text-xs font-mono tracking-widest text-[#FAF8F5]/60">
-                  [ SEARCH OVER 2,229+ LOSSLESS ACOUSTIC MATRICES & DIRECT FEEDS ]
+              <div className="py-14 text-center text-[#FAF8F5]/50 space-y-2">
+                <Music className="w-8 h-8 mx-auto text-[#00f0ff]/60 animate-pulse" />
+                <p className="text-xs font-mono tracking-widest text-[#FAF8F5]/70">
+                  [ SEARCH OVER 100M+ TRACKS, LOSSLESS FLAC & DIRECT FEEDS ]
                 </p>
-                <p className="text-[11px] font-mono text-[#FAF8F5]/30">
-                  Query across acoustic nodes, master frequencies, and global relays.
+                <p className="text-[11px] font-mono text-[#FAF8F5]/40">
+                  Search any song by title, artist, or acoustic station.
                 </p>
               </div>
             ) : isSearching && totalResults === 0 ? (
-              <div className="py-14 text-center text-[#cfc6b0] text-xs font-mono flex items-center justify-center gap-2">
+              <div className="py-14 text-center text-[#00f0ff] text-xs font-mono flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#00f0ff]" />
-                <span>[ QUERYING SOVEREIGN AUDIO MATRICES... ]</span>
+                <span>[ SCANNING GLOBAL DISCOGRAPHY & LOSSLESS CHANNELS... ]</span>
               </div>
             ) : totalResults === 0 ? (
-              <div className="py-14 text-center text-[#FAF8F5]/50 text-xs font-mono">
-                [ NO ACOUSTIC SIGNALS MATCHING "{query}" ]
+              <div className="py-14 text-center text-[#FAF8F5]/60 text-xs font-mono">
+                [ NO RESULTS MATCHING "{query}" ]
               </div>
             ) : (
               <>
-                {/* Station Matches */}
+                {/* 1. TOP RELEVANCY MATCH SHOWCASE CARD */}
+                {results.topMatch && (activeTab === 'all' || activeTab === 'spotify') && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 mb-2 font-mono text-[10px] text-[#00f0ff] uppercase tracking-widest font-semibold px-1">
+                      <Zap className="w-3.5 h-3.5 text-[#00f0ff]" />
+                      <span>TOP MATCH // BEST RELEVANCY</span>
+                    </div>
+
+                    <div
+                      onClick={() => handleSelectTrack(results.topMatch)}
+                      className="top-match-card p-3.5 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 cursor-pointer hover:border-[#00f0ff] transition-all group"
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="relative w-13 h-13 sm:w-16 sm:h-16 rounded-[10px] overflow-hidden bg-[#0d0e12] border border-[#00f0ff]/40 flex-shrink-0 shadow-md">
+                          <img
+                            src={results.topMatch.thumbnail || '/favicon.svg'}
+                            alt=""
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm sm:text-base font-semibold text-[#FFFFFF] font-space truncate group-hover:text-[#00f0ff] transition-colors">
+                              {results.topMatch.title}
+                            </span>
+                            <span className="bg-[#00f0ff]/20 text-[#00f0ff] text-[9px] font-mono px-2 py-0.5 rounded-[4px] border border-[#00f0ff]/40 font-bold flex-shrink-0">
+                              BEST RESULT
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#C8CCD4] font-mono truncate mt-0.5">
+                            {results.topMatch.artist} {results.topMatch.album ? `• ${results.topMatch.album}` : ''}
+                          </p>
+                          <div className="flex items-center gap-2 text-[10px] font-mono text-[#9ca0a8] mt-1">
+                            <span className="text-[#00f0ff]">{results.topMatch.sourceLabel || 'Studio Master'}</span>
+                            <span>•</span>
+                            <span>{formatTime(results.topMatch.duration)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="w-10 h-10 rounded-[10px] border border-[#00f0ff] bg-[#00f0ff]/15 group-hover:bg-[#00f0ff] group-hover:text-[#0c0d12] text-[#00f0ff] flex items-center justify-center transition-all shadow-md">
+                          <Play className="w-4 h-4 fill-current translate-x-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. STATION MATCHES */}
                 {(activeTab === 'all' || activeTab === 'stations') && results.stations.length > 0 && (
                   <div className="space-y-1.5 mb-3">
                     <div className="text-[10px] font-mono text-[#cfc6b0] font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
@@ -269,10 +324,10 @@ export default function GlobalSearchModal({
                             onSelectStation(st);
                             onClose();
                           }}
-                          className="flex items-center gap-2.5 p-2.5 bg-[#18191d]/90 hover:bg-[#232529] border border-[#cfc6b0]/15 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group"
+                          className="flex items-center gap-2.5 p-2.5 bg-[#14161f] hover:bg-[#1f222d] border border-[#cfc6b0]/20 hover:border-[#cfc6b0]/60 text-left transition-all cursor-pointer group rounded-[10px]"
                         >
                           <div
-                            className="w-8 h-8 flex items-center justify-center border border-[#cfc6b0]/30 flex-shrink-0"
+                            className="w-8 h-8 rounded-[6px] flex items-center justify-center border border-[#cfc6b0]/30 flex-shrink-0"
                             style={{ backgroundColor: `${st.color || '#cfc6b0'}15` }}
                           >
                             <Radio className="w-4 h-4" style={{ color: st.color || '#cfc6b0' }} />
@@ -281,7 +336,7 @@ export default function GlobalSearchModal({
                             <h4 className="text-xs font-bold font-mono text-[#FAF8F5] truncate group-hover:text-[#cfc6b0]">
                               {st.name}
                             </h4>
-                            <p className="text-[10px] text-[#FAF8F5]/50 truncate font-mono">
+                            <p className="text-[10px] text-[#9ca0a8] truncate font-mono">
                               {st.songs?.length || 0} lossless tracks // 24-BIT
                             </p>
                           </div>
@@ -291,47 +346,100 @@ export default function GlobalSearchModal({
                   </div>
                 )}
 
-                {/* Neural Radar Matches */}
-                {(activeTab === 'all' || activeTab === 'spotify') && results.spotify?.length > 0 && (
+                {/* 3. UNIFIED RANKED SONGS (When 'all' is selected) */}
+                {activeTab === 'all' && (results.allRanked?.length > 0 ? (
                   <div className="space-y-1.5 mb-3">
-                    <div className="text-[10px] font-mono text-[#cfc6b0] font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="text-[10px] font-mono text-[#00f0ff] font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
                       <Activity className="w-3.5 h-3.5 text-[#00f0ff]" />
-                      <span>NEURAL RADAR // MASTER REPERTORY</span>
+                      <span>ALL RELEVANT SONGS ({results.allRanked.length})</span>
                     </div>
-                    {results.spotify.map((song) => (
+                    {results.allRanked.map((song, idx) => (
                       <div
-                        key={song.id}
+                        key={song.id || idx}
                         onClick={() => handleSelectTrack(song)}
-                        className="flex items-center justify-between p-2.5 sm:p-3 bg-[#18191d]/90 hover:bg-[#232529] border border-[#cfc6b0]/15 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group"
+                        className="flex items-center justify-between p-2.5 sm:p-3 bg-[#14161f] hover:bg-[#1e212c] border border-white/10 hover:border-[#00f0ff]/60 text-left transition-all cursor-pointer group rounded-[10px] shadow-sm"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-10 h-10 border border-[#cfc6b0]/20 flex-shrink-0 flex items-center justify-center bg-[#0d0e11] overflow-hidden">
+                          <span className="font-mono text-[10px] text-[#9ca0a8] w-5 text-center flex-shrink-0">
+                            #{String(idx + 1).padStart(2, '0')}
+                          </span>
+
+                          <div className="w-10 h-10 rounded-[6px] border border-white/10 flex-shrink-0 flex items-center justify-center bg-[#090a0e] overflow-hidden">
                             {song.thumbnail ? (
-                              <img src={song.thumbnail} alt="" className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-300" />
+                              <img src={song.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                             ) : (
                               <Disc3 className="w-4 h-4 text-[#cfc6b0]" />
                             )}
                           </div>
                           <div className="truncate flex-1 min-w-0 pr-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs sm:text-sm font-medium font-serif text-[#FAF8F5] truncate group-hover:text-[#cfc6b0]">
+                              <span className="text-xs sm:text-sm font-medium font-space text-[#FFFFFF] truncate group-hover:text-[#00f0ff] transition-colors">
                                 {song.title}
                               </span>
                               <span className="telemetry-tag text-[8px] py-0.2 px-1">
-                                NEURAL 24-BIT
+                                {song.sourceLabel || '24-BIT'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-[#FAF8F5]/50 font-mono truncate mt-0.5">
+                            <p className="text-[10px] text-[#C4C8D0] font-mono truncate mt-0.5">
                               {song.artist} {song.album ? `// ${song.album}` : ''}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#FAF8F5]/40">
+                          <span className="text-[10px] font-mono text-[#9ca0a8]">
                             {formatTime(song.duration)}
                           </span>
-                          <div className="w-7 h-7 border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
+                          <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/30 group-hover:border-[#00f0ff] group-hover:bg-[#00f0ff] group-hover:text-[#0c0d12] text-[#FAF8F5] flex items-center justify-center transition-all">
+                            <Play className="w-3 h-3 fill-current translate-x-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null)}
+
+                {/* 4. GLOBAL CATALOG (SPOTIFY) TAB */}
+                {activeTab === 'spotify' && results.spotify?.length > 0 && (
+                  <div className="space-y-1.5 mb-3">
+                    <div className="text-[10px] font-mono text-[#cfc6b0] font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5 text-[#00f0ff]" />
+                      <span>GLOBAL CATALOG DISCOGRAPHY</span>
+                    </div>
+                    {results.spotify.map((song) => (
+                      <div
+                        key={song.id}
+                        onClick={() => handleSelectTrack(song)}
+                        className="flex items-center justify-between p-2.5 sm:p-3 bg-[#14161f] hover:bg-[#1e212c] border border-white/10 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group rounded-[10px]"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-[6px] border border-white/10 flex-shrink-0 flex items-center justify-center bg-[#090a0e] overflow-hidden">
+                            {song.thumbnail ? (
+                              <img src={song.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
+                            ) : (
+                              <Disc3 className="w-4 h-4 text-[#cfc6b0]" />
+                            )}
+                          </div>
+                          <div className="truncate flex-1 min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs sm:text-sm font-medium font-space text-[#FFFFFF] truncate group-hover:text-[#cfc6b0]">
+                                {song.title}
+                              </span>
+                              <span className="telemetry-tag text-[8px] py-0.2 px-1">
+                                24-BIT
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-[#C4C8D0] font-mono truncate mt-0.5">
+                              {song.artist} {song.album ? `// ${song.album}` : ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-[#9ca0a8]">
+                            {formatTime(song.duration)}
+                          </span>
+                          <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                             <Play className="w-3 h-3 fill-current translate-x-0.5" />
                           </div>
                         </div>
@@ -340,8 +448,8 @@ export default function GlobalSearchModal({
                   </div>
                 )}
 
-                {/* Curated Lossless CDN Matches */}
-                {(activeTab === 'all' || activeTab === 'curated') && results.curated?.length > 0 && (
+                {/* 5. CURATED LOSSLESS CDN TAB */}
+                {activeTab === 'curated' && results.curated?.length > 0 && (
                   <div className="space-y-1.5 mb-3">
                     <div className="text-[10px] font-mono text-[#00f0ff] font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
                       <Zap className="w-3 h-3 text-[#00f0ff]" />
@@ -351,36 +459,36 @@ export default function GlobalSearchModal({
                       <div
                         key={song.id}
                         onClick={() => handleSelectTrack(song)}
-                        className="flex items-center justify-between p-2.5 sm:p-3 bg-[#18191d]/90 hover:bg-[#232529] border border-[#cfc6b0]/15 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group"
+                        className="flex items-center justify-between p-2.5 sm:p-3 bg-[#14161f] hover:bg-[#1e212c] border border-white/10 hover:border-[#00f0ff]/50 text-left transition-all cursor-pointer group rounded-[10px]"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-9 h-9 border border-[#cfc6b0]/20 flex-shrink-0 flex items-center justify-center bg-[#0d0e11] overflow-hidden">
+                          <div className="w-9 h-9 rounded-[6px] border border-white/10 flex-shrink-0 flex items-center justify-center bg-[#090a0e] overflow-hidden">
                             {song.thumbnail ? (
-                              <img src={song.thumbnail} alt="" className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-300" />
+                              <img src={song.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                             ) : (
                               <Music className="w-4 h-4 text-[#00f0ff]" />
                             )}
                           </div>
                           <div className="truncate flex-1 min-w-0 pr-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs sm:text-sm font-medium font-serif text-[#FAF8F5] truncate group-hover:text-[#00f0ff]">
+                              <span className="text-xs sm:text-sm font-medium font-space text-[#FFFFFF] truncate group-hover:text-[#00f0ff]">
                                 {song.title}
                               </span>
                               <span className="telemetry-tag text-[8px] py-0.2 px-1 text-[#00f0ff] border-[#00f0ff]/30">
                                 FLAC 96k
                               </span>
                             </div>
-                            <p className="text-[10px] text-[#FAF8F5]/50 font-mono truncate mt-0.5">
-                              {song.artist} // <span className="text-[#FAF8F5]/40">{song.stationName}</span>
+                            <p className="text-[10px] text-[#C4C8D0] font-mono truncate mt-0.5">
+                              {song.artist} // <span className="text-[#9ca0a8]">{song.stationName}</span>
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3 flex-shrink-0 ml-2">
-                          <span className="text-[10px] font-mono text-[#FAF8F5]/40">
+                          <span className="text-[10px] font-mono text-[#9ca0a8]">
                             {formatTime(song.duration)}
                           </span>
-                          <div className="w-7 h-7 border border-[#cfc6b0]/40 group-hover:border-[#00f0ff] group-hover:bg-[#00f0ff] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
+                          <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#00f0ff] group-hover:bg-[#00f0ff] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                             <Play className="w-3 h-3 fill-current translate-x-0.5" />
                           </div>
                         </div>
@@ -389,12 +497,12 @@ export default function GlobalSearchModal({
                   </div>
                 )}
 
-                {/* Sovereign Airplay Matches */}
-                {(activeTab === 'all' || activeTab === 'youtube') && results.youtube.length > 0 && (
+                {/* 6. YOUTUBE FULL TRACKS TAB */}
+                {activeTab === 'youtube' && results.youtube?.length > 0 && (
                   <div className="space-y-1.5 mb-3">
                     <div className="text-[10px] font-mono text-[#FAF8F5]/80 font-bold px-1 uppercase tracking-widest flex items-center gap-1.5">
                       <Waves className="w-3.5 h-3.5 text-[#cfc6b0]" />
-                      <span>SOVEREIGN AIRPLAY // HIGH-BITRATE DISPATCH</span>
+                      <span>YOUTUBE FULL TRACKS</span>
                     </div>
                     {results.youtube.map((video) => {
                       const isResolving = resolvingId === video.id;
@@ -403,22 +511,19 @@ export default function GlobalSearchModal({
                         <div
                           key={video.id}
                           onClick={() => !isResolving && handleSelectTrack(video)}
-                          className="flex items-center justify-between p-2.5 sm:p-3 bg-[#18191d]/90 hover:bg-[#232529] border border-[#cfc6b0]/15 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group"
+                          className="flex items-center justify-between p-2.5 sm:p-3 bg-[#14161f] hover:bg-[#1e212c] border border-white/10 hover:border-[#cfc6b0]/50 text-left transition-all cursor-pointer group rounded-[10px]"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="w-12 h-8 border border-[#cfc6b0]/20 flex-shrink-0 flex items-center justify-center relative bg-[#0d0e11] overflow-hidden">
-                              <img src={video.thumbnail} alt="" className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-300" />
-                              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 bg-black/90 text-[7px] font-mono text-[#cfc6b0] border border-[#cfc6b0]/30">
-                                NODE
-                              </span>
+                            <div className="w-12 h-8 rounded-[4px] border border-white/10 flex-shrink-0 flex items-center justify-center relative bg-[#090a0e] overflow-hidden">
+                              <img src={video.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" />
                             </div>
                             <div className="truncate flex-1 min-w-0 pr-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs sm:text-sm font-medium font-serif text-[#FAF8F5] truncate group-hover:text-[#cfc6b0]">
+                                <span className="text-xs sm:text-sm font-medium font-space text-[#FFFFFF] truncate group-hover:text-[#cfc6b0]">
                                   {video.title}
                                 </span>
                               </div>
-                              <p className="text-[10px] text-[#FAF8F5]/50 font-mono truncate mt-0.5">
+                              <p className="text-[10px] text-[#C4C8D0] font-mono truncate mt-0.5">
                                 {video.artist}
                               </p>
                             </div>
@@ -426,11 +531,11 @@ export default function GlobalSearchModal({
 
                           <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                             {video.duration > 0 && (
-                              <span className="text-[10px] font-mono text-[#FAF8F5]/40">
+                              <span className="text-[10px] font-mono text-[#9ca0a8]">
                                 {formatTime(video.duration)}
                               </span>
                             )}
-                            <div className="w-7 h-7 border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
+                            <div className="w-7 h-7 rounded-[6px] border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] group-hover:bg-[#FAF8F5] group-hover:text-[#121316] text-[#FAF8F5] flex items-center justify-center transition-all">
                               {isResolving ? (
                                 <Loader2 className="w-3 h-3 animate-spin text-[#cfc6b0]" />
                               ) : (

@@ -40,11 +40,11 @@ export default function HomePage() {
   } = useAudio();
 
   return (
-    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-18 pb-28 relative overflow-hidden">
+    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-24 sm:pt-28 pb-32 relative overflow-hidden flex flex-col items-center">
       {/* Atlantic.vc Signature Wave Particle Cloud Background */}
       <ParticleCloudCanvas isPlaying={isPlaying} />
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 flex flex-col w-full relative z-10">
+      <div className="w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto px-4 sm:px-8 flex flex-col relative z-10">
         
         {/* Section 1: Master Listening Deck */}
         <MasterListeningDeck

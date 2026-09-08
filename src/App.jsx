@@ -227,7 +227,7 @@ function AppContent() {
 
   return (
     <main
-      className={`w-full min-h-screen relative bg-[#121316] select-none text-[#e3e2e6] ${
+      className={`w-full min-h-screen relative bg-[#121316] select-none text-[#e3e2e6] flex flex-col items-center ${
         isFullscreen ? 'cursor-none' : ''
       }`}
       role="application"
@@ -264,7 +264,7 @@ function AppContent() {
       )}
 
       {/* Multi-Page Routes with Suspense Fallback */}
-      <div className="w-full">
+      <div className="w-full flex justify-center">
         <Suspense
           fallback={
             <div className="min-h-[70vh] flex items-center justify-center text-white/50 text-xs font-mono">

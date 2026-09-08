@@ -163,8 +163,8 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-20 pb-32 px-4 sm:px-8 relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto flex flex-col relative z-10">
+    <div className="w-full min-h-screen bg-[#0d0e11] text-[#FAF8F5] pt-20 pb-32 px-4 sm:px-8 relative overflow-hidden flex flex-col items-center">
+      <div className="w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex flex-col relative z-10">
 
         {/* Editorial Header Ribbon & Title */}
         <header className="mb-8 pb-6 border-b border-[#2b2f33]">
@@ -294,8 +294,8 @@ export default function ExplorePage() {
 
         {/* Loading Skeleton */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-6">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 trend-adaptive-grid gap-6 py-6">
+            {[...Array(10)].map((_, i) => (
               <div key={i} className="p-5 rounded-[16px] bg-[#121316] border border-[#2b2f33] animate-pulse flex flex-col gap-3">
                 <div className="aspect-square w-full rounded-[10px] bg-[#1b1b1f]" />
                 <div className="h-4 bg-[#1b1b1f] rounded w-3/4" />
@@ -313,7 +313,7 @@ export default function ExplorePage() {
               <span>{filteredCarriers.length} ACTIVE CHANNELS</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 trend-adaptive-grid gap-6">
               {filteredCarriers.map((st, idx) => {
                 const isCurrentSt = currentStation?.id === st.id;
                 return (
@@ -396,7 +396,7 @@ export default function ExplorePage() {
 
         {/* 3. TRACKS MATRIX GRID VIEW */}
         {!isLoading && activeCategory !== 'carriers' && viewMode === 'grid' && displayedTracks.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 trend-adaptive-grid gap-6">
             {displayedTracks.map((item, idx) => {
               const isCurrentlyPlaying = currentTrack?.title === item.title && isPlaying;
               const liked = isLiked(item.id || item.title);

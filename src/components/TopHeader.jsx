@@ -85,30 +85,30 @@ function TopHeader({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#0d0e11]/92 backdrop-blur-xl border-b border-[#2b2f33]/80 select-none">
-      <div className="h-16 max-w-[1400px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#0d0e11]/92 backdrop-blur-xl border-b border-[#2b2f33]/80 select-none flex justify-center">
+      <div className="h-16 w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto px-3 sm:px-6 md:px-8 flex items-center justify-between gap-2 sm:gap-4">
         
         {/* Left: Brand Identity with Geometric Cad Glyph */}
-        <div className="flex items-center gap-4 relative" ref={dropdownRef}>
+        <div className="flex items-center gap-2 sm:gap-4 relative flex-shrink-0" ref={dropdownRef}>
           <button
             onClick={() => setIsStationMenuOpen((prev) => !prev)}
-            className="flex items-center gap-2 text-left cursor-pointer group focus-visible:outline-none"
+            className="flex items-center gap-2 text-left cursor-pointer group focus-visible:outline-none flex-shrink-0"
             title="Sovereign Channels Matrix"
           >
             {/* Geometric brand mark */}
-            <div className="w-7 h-7 rounded-[7px] overflow-hidden border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] transition-colors relative flex items-center justify-center bg-[#0D0D11]">
+            <div className="w-7 h-7 rounded-[7px] overflow-hidden border border-[#cfc6b0]/40 group-hover:border-[#FAF8F5] transition-colors relative flex items-center justify-center bg-[#0D0D11] flex-shrink-0">
               <img src="/viberr-icon.svg" alt="Viberr" className="w-full h-full object-cover" />
             </div>
 
-            <div className="flex items-baseline gap-2">
-              <span className="font-space text-base tracking-[-0.03em] font-normal text-[#FAF8F5]">
+            <div className="flex items-baseline gap-1.5 sm:gap-2 whitespace-nowrap">
+              <span className="font-space text-sm sm:text-base tracking-[-0.03em] font-normal text-[#FAF8F5]">
                 viberr<span className="text-[#00f0ff]">.</span>matrix
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#cfc6b0]/70 border border-[#2b2f33] px-1.5 py-0.5 rounded-[4px]">
+              <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#cfc6b0]/80 border border-[#2b2f33] px-1.5 py-0.5 rounded-[4px] whitespace-nowrap hidden xs:inline-block">
                 CH // {currentStation?.id ? currentStation.id.slice(0, 3).toUpperCase() : '01'}
               </span>
             </div>
-            <ChevronDown className="w-3 h-3 text-[#cfc6b0]/60 group-hover:text-[#FAF8F5] transition-transform duration-200" />
+            <ChevronDown className="w-3 h-3 text-[#cfc6b0]/60 group-hover:text-[#FAF8F5] transition-transform duration-200 flex-shrink-0" />
           </button>
 
           {/* Stepped Charcoal Channel Dropdown with Wireframe Border */}
@@ -164,14 +164,14 @@ function TopHeader({
         </div>
 
         {/* Center: Observatory Monospaced Telemetry Navigation */}
-        <nav className="hidden lg:flex items-center gap-6">
+        <nav className="hidden xl:flex items-center gap-5 xl:gap-6">
           {NAV_ITEMS.map((item) => {
             const isActive = isItemActive(item);
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
-                className={`font-mono text-[11px] uppercase tracking-[0.16em] transition-all cursor-pointer relative py-1 flex items-center gap-1.5 ${
+                className={`font-mono text-[11px] uppercase tracking-[0.16em] transition-all cursor-pointer relative py-1 flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
                     ? 'text-[#FAF8F5] font-semibold'
                     : 'text-[#8f918c] hover:text-[#FAF8F5]'
@@ -188,9 +188,9 @@ function TopHeader({
         </nav>
 
         {/* Right: Technical Readout & Outlined Action Triggers */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* Signal Status Telemetry Badge */}
-          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-[6px] border border-[#2b2f33] bg-[#121316] font-mono text-[10px] tracking-[0.14em] uppercase text-[#cfc6b0]">
+          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-[6px] border border-[#2b2f33] bg-[#121316] font-mono text-[10px] tracking-[0.14em] uppercase text-[#cfc6b0] whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
             <span>24-BIT // 96kHz</span>
           </div>
@@ -198,7 +198,7 @@ function TopHeader({
           {/* Search Trigger (⌘K) */}
           <button
             onClick={onOpenGlobalSearch}
-            className="w-8 h-8 rounded-[8px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 bg-transparent flex items-center justify-center text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer"
+            className="w-8 h-8 rounded-[8px] border border-[#2b2f33] hover:border-[#cfc6b0]/50 bg-transparent flex items-center justify-center text-[#8f918c] hover:text-[#FAF8F5] transition-all cursor-pointer flex-shrink-0"
             title="Global Search (⌘K / /)"
             aria-label="Search"
           >
@@ -208,28 +208,30 @@ function TopHeader({
           {/* DSP & Matrix Config Trigger */}
           <button
             onClick={onOpenAudioSource}
-            className="wireframe-btn !py-1.5 !px-3"
+            className="wireframe-btn !py-1.5 !px-2.5 sm:!px-3 hidden md:inline-flex flex-shrink-0"
             title="Audio Matrix & DSP Configuration"
           >
             <Settings className="w-3 h-3 text-[#cfc6b0]" />
-            <span className="hidden md:inline">MATRIX</span>
+            <span>MATRIX</span>
           </button>
 
-          {/* Primary Outlined Action Trigger (Atlantic.vc CTA style) */}
+          {/* Primary Outlined Action Trigger */}
           <button
             onClick={onTogglePlay}
-            className="wireframe-btn-accent !py-1.5 !px-4"
+            className="wireframe-btn-accent !py-1.5 !px-2.5 sm:!px-4 flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap"
             title={isPlaying ? 'Pause Broadcast (Space)' : 'Start Broadcast (Space)'}
           >
             {isPlaying ? (
               <>
                 <Pause className="w-3 h-3 fill-current" />
-                <span>DISPATCH ACTIVE</span>
+                <span className="hidden sm:inline">DISPATCH ACTIVE</span>
+                <span className="sm:hidden text-[10px] font-mono">PAUSE</span>
               </>
             ) : (
               <>
                 <Play className="w-3 h-3 fill-current" />
-                <span>INITIALIZE AIRPLAY</span>
+                <span className="hidden sm:inline">INITIALIZE AIRPLAY</span>
+                <span className="sm:hidden text-[10px] font-mono">PLAY</span>
               </>
             )}
           </button>

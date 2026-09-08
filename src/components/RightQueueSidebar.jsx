@@ -36,7 +36,7 @@ export default function RightQueueSidebar({ isOpen, onToggle, onClose }) {
         whileHover={{ scale: 1.04, x: -2 }}
         whileTap={{ scale: 0.96 }}
         onClick={onToggle}
-        className={`fixed right-0 top-1/2 -translate-y-1/2 z-40 px-2 py-3.5 rounded-l-[10px] border-r-0 border border-[#cfc6b0]/30 bg-[#121316]/95 hover:bg-[#1b1b1f] text-[#cfc6b0] shadow-2xl flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 backdrop-blur-md group ${
+        className={`fixed right-0 top-1/2 -translate-y-1/2 z-40 px-2 py-3.5 rounded-l-[10px] border-r-0 border border-[#cfc6b0]/30 bg-[#121316]/95 hover:bg-[#1b1b1f] text-[#cfc6b0] shadow-2xl hidden xl:flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 backdrop-blur-md group ${
           isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
         title="Open Queue & Stations (Q)"

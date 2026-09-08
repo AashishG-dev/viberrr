@@ -30,8 +30,8 @@ export default function EqualizerPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#121316] text-[#e3e2e6] pt-24 pb-36 px-4 sm:px-8">
-      <div className="max-w-[1280px] mx-auto flex flex-col">
+    <div className="w-full min-h-screen bg-[#121316] text-[#e3e2e6] pt-24 pb-36 px-4 sm:px-8 flex flex-col items-center">
+      <div className="w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex flex-col">
 
         {/* Console Header */}
         <header className="mb-10 pb-8 border-b border-[#343538]/50">
