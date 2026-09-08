@@ -2,9 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { shuffleArray } from '../utils/formatters';
 import { useYouTubeAudioEngine } from './useYouTubeAudioEngine';
 import { streamResolver } from '../services/streaming/StreamResolver';
+import { useAudioKeepAlive } from './useAudioKeepAlive';
 
 export function useAudioPlayer(initialTracks = []) {
   const audioRef = useRef(null);
+  const preloadAudioRef = useRef(null);
+  const preloadedTrackRef = useRef(null);
+  const isPreloadingRef = useRef(false);
+
   const [tracks, setTracks] = useState(initialTracks);
   const [originalTracks, setOriginalTracks] = useState(initialTracks);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
@@ -27,6 +32,9 @@ export function useAudioPlayer(initialTracks = []) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLiveStream, setIsLiveStream] = useState(false);
   const [userQueue, setUserQueue] = useState([]);
+
+  // Maintain continuous Android audio wake lock to prevent background tab death
+  useAudioKeepAlive(isPlaying);
 
   const currentTrack = tracks[currentTrackIndex] || null;
   const isCurrentTrackYouTube = Boolean(
@@ -113,6 +121,34 @@ export function useAudioPlayer(initialTracks = []) {
       setCurrentTime(cur);
       updateBuffered();
 
+      // Next-Track Pre-Resolution & Pre-Buffering: 15-20s before end for 0ms Android switch
+      if (!isPreloadingRef.current && tracks.length > 1 && !isLiveStream && audio.duration > 15) {
+        if (cur >= audio.duration - 20 || (cur / audio.duration > 0.8)) {
+          const nextIdx = (currentTrackIndex + 1) % tracks.length;
+          const nextCandidate = tracks[nextIdx];
+          if (nextCandidate && (!preloadedTrackRef.current || preloadedTrackRef.current.targetIndex !== nextIdx)) {
+            isPreloadingRef.current = true;
+            streamResolver.resolvePlayableTrack(nextCandidate).then((resolved) => {
+              if (resolved) {
+                preloadedTrackRef.current = { ...resolved, targetIndex: nextIdx };
+                if (resolved.url && !resolved.isYouTubeEngine) {
+                  if (!preloadAudioRef.current && typeof Audio !== 'undefined') {
+                    preloadAudioRef.current = new Audio();
+                    preloadAudioRef.current.preload = 'auto';
+                  }
+                  if (preloadAudioRef.current) {
+                    preloadAudioRef.current.src = resolved.url;
+                    preloadAudioRef.current.load();
+                  }
+                }
+              }
+            }).catch(() => {}).finally(() => {
+              isPreloadingRef.current = false;
+            });
+          }
+        }
+      }
+
       if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession && audio.duration > 0) {
         try {
           navigator.mediaSession.setPositionState({
@@ -147,7 +183,7 @@ export function useAudioPlayer(initialTracks = []) {
     };
 
     const handleEnded = () => {
-      setIsPlaying(false);
+      // Keep isPlaying alive across track switches so Android OS never drops the notification
       handleNextTrackRef.current?.();
     };
 
@@ -173,18 +209,28 @@ export function useAudioPlayer(initialTracks = []) {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [isCurrentTrackYouTube]);
+  }, [isCurrentTrackYouTube, currentTrackIndex, tracks, isLiveStream]);
 
-  // MediaSession integration
+  // MediaSession integration with high-res absolute PNG artwork for Android OS Lockscreen
   useEffect(() => {
     if ('mediaSession' in navigator && currentTrack) {
       try {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const fallbackPng = `${origin}/android-chrome-512x512.png`;
+        const artworkSrc = currentTrack.thumbnail && currentTrack.thumbnail.startsWith('http') && !currentTrack.thumbnail.includes('.svg')
+          ? currentTrack.thumbnail
+          : fallbackPng;
+
         navigator.mediaSession.metadata = new MediaMetadata({
           title: currentTrack.title || 'Viberr Radio',
           artist: currentTrack.artist || 'Viberr Live Stream',
           album: isLiveStream ? '24/7 Global Web Stream' : (currentTrack.album || 'Viberr Lossless Sessions'),
           artwork: [
-            { src: currentTrack.thumbnail || '/favicon.svg', sizes: '512x512', type: 'image/png' }
+            { src: artworkSrc, sizes: '512x512', type: 'image/png' },
+            { src: `${origin}/android-chrome-192x192.png`, sizes: '192x192', type: 'image/png' },
+            { src: artworkSrc, sizes: '256x256', type: 'image/png' },
+            { src: artworkSrc, sizes: '128x128', type: 'image/png' },
+            { src: artworkSrc, sizes: '96x96', type: 'image/png' }
           ]
         });
 
@@ -196,11 +242,21 @@ export function useAudioPlayer(initialTracks = []) {
         navigator.mediaSession.setActionHandler('seekto', (details) => {
           if (details.seekTime !== undefined) seekActionRef.current?.(details.seekTime);
         });
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          const skipTime = details?.seekOffset || 10;
+          const cur = audioRef.current?.currentTime || currentTime;
+          seekActionRef.current?.(Math.max(0, cur - skipTime));
+        });
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          const skipTime = details?.seekOffset || 10;
+          const cur = audioRef.current?.currentTime || currentTime;
+          seekActionRef.current?.(Math.min(duration, cur + skipTime));
+        });
       } catch (e) {
         console.warn('MediaSession metadata error:', e);
       }
     }
-  }, [currentTrack, isLiveStream]);
+  }, [currentTrack, isLiveStream, duration, currentTime]);
 
   // Keep OS Lockscreen / Notification PlaybackState in lockstep
   useEffect(() => {
@@ -280,21 +336,28 @@ export function useAudioPlayer(initialTracks = []) {
     setIsLoading(true);
     let targetTrack = rawTrack;
 
-    const hasValidYtId = Boolean(rawTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(rawTrack.videoId));
-    const isDirectR2 = Boolean(rawTrack.url && rawTrack.url.includes('r2.dev'));
+    // Fast path: use pre-resolved track if available for instant 0ms transition
+    if (preloadedTrackRef.current && preloadedTrackRef.current.targetIndex === idx) {
+      targetTrack = preloadedTrackRef.current;
+      preloadedTrackRef.current = null;
+    } else {
+      const hasValidYtId = Boolean(rawTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(rawTrack.videoId));
+      const isDirectR2 = Boolean(rawTrack.url && rawTrack.url.includes('r2.dev'));
 
-    if (!hasValidYtId && !isDirectR2) {
-      try {
-        const resolved = await streamResolver.resolvePlayableTrack(rawTrack);
-        if (resolved) {
-          targetTrack = resolved;
+      if (!hasValidYtId && !isDirectR2) {
+        try {
+          const resolved = await streamResolver.resolvePlayableTrack(rawTrack);
+          if (resolved) {
+            targetTrack = resolved;
+          }
+        } catch (e) {
+          console.warn('Failed to resolve full-length track:', e);
         }
-      } catch (e) {
-        console.warn('Failed to resolve full-length track:', e);
       }
     }
 
-    const isYt = Boolean(targetTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(targetTrack.videoId));
+    // Direct audio URLs have top priority for stable Android background playback
+    const isYt = Boolean(targetTrack.isYouTubeEngine && !targetTrack.url);
 
     setTracks((prev) => {
       if (!prev[idx]) return prev;
@@ -369,13 +432,13 @@ export function useAudioPlayer(initialTracks = []) {
       }
     }
 
-    const isYt = Boolean(targetTrack.videoId && /^[a-zA-Z0-9_-]{11}$/.test(targetTrack.videoId));
+    const isYt = Boolean(targetTrack.isYouTubeEngine && !targetTrack.url);
     const safeTrack = {
       ...targetTrack,
       id: targetTrack.id || `track_${Date.now()}`,
       title: targetTrack.title || 'Unknown Track',
       artist: targetTrack.artist || 'Viberr Artist',
-      thumbnail: targetTrack.thumbnail || '/favicon.svg',
+      thumbnail: targetTrack.thumbnail || '/android-chrome-512x512.png',
       duration: targetTrack.duration || 210,
       videoId: isYt ? targetTrack.videoId : '',
       isYouTubeEngine: isYt,

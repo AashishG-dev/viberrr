@@ -157,19 +157,47 @@ class StreamResolver {
   async resolvePlayableTrack(trackItem) {
     if (!trackItem) return null;
 
+    const cacheKey = trackItem.id || `${trackItem.title}_${trackItem.artist}`;
+    const cached = this.streamCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < this.expiryWindowMs)) {
+      return cached.data;
+    }
+
     // A. If Curated Lossless Station song (320kbps full track from R2)
-    if (trackItem.url && trackItem.url.includes('r2.dev') || trackItem.source === 'curated') {
-      return {
+    if ((trackItem.url && trackItem.url.includes('r2.dev')) || trackItem.source === 'curated') {
+      const result = {
         ...trackItem,
         isYouTubeEngine: false,
         isFullTrack: true
       };
+      this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
     }
 
     // B. If track already has a verified 11-character YouTube videoId
     const existingVideoId = trackItem.videoId || (typeof trackItem.id === 'string' && trackItem.id.startsWith('yt_') ? trackItem.id.replace('yt_', '') : '');
     if (existingVideoId && /^[a-zA-Z0-9_-]{11}$/.test(existingVideoId)) {
-      return {
+      // Try resolving direct audio stream first for mobile background stability
+      try {
+        const directAudio = await youtubeProvider.resolveAudioStream(existingVideoId);
+        if (directAudio && directAudio.url) {
+          const result = {
+            ...trackItem,
+            videoId: existingVideoId,
+            url: directAudio.url,
+            isYouTubeEngine: false,
+            isFullTrack: true,
+            duration: directAudio.duration || trackItem.duration || 210,
+            thumbnail: directAudio.thumbnail || trackItem.thumbnail
+          };
+          this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+          return result;
+        }
+      } catch (e) {
+        // Fall back to YouTube headless engine
+      }
+
+      const result = {
         ...trackItem,
         videoId: existingVideoId,
         url: '',
@@ -177,6 +205,8 @@ class StreamResolver {
         isFullTrack: true,
         duration: trackItem.duration || 210
       };
+      this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
     }
 
     // C. If track needs full-length resolution (Spotify, Apple chart, or trend item):
@@ -187,7 +217,25 @@ class StreamResolver {
       const validMatch = ytMatches.find((m) => m.videoId && /^[a-zA-Z0-9_-]{11}$/.test(m.videoId));
       
       if (validMatch) {
-        return {
+        // Try extracting direct audio stream from the match
+        try {
+          const directAudio = await youtubeProvider.resolveAudioStream(validMatch.videoId);
+          if (directAudio && directAudio.url) {
+            const result = {
+              ...trackItem,
+              videoId: validMatch.videoId,
+              thumbnail: trackItem.thumbnail || directAudio.thumbnail || validMatch.thumbnail,
+              url: directAudio.url,
+              isYouTubeEngine: false,
+              isFullTrack: true,
+              duration: directAudio.duration || validMatch.duration || trackItem.duration || 210
+            };
+            this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+            return result;
+          }
+        } catch (e) {}
+
+        const result = {
           ...trackItem,
           videoId: validMatch.videoId,
           thumbnail: trackItem.thumbnail || validMatch.thumbnail,
@@ -196,6 +244,8 @@ class StreamResolver {
           isFullTrack: true,
           duration: validMatch.duration || trackItem.duration || 210
         };
+        this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+        return result;
       }
     } catch (e) {
       console.warn('Full-track YouTube resolution failed:', e);
@@ -203,11 +253,13 @@ class StreamResolver {
 
     // D. Fallback to direct audio if available
     if (trackItem.url) {
-      return {
+      const result = {
         ...trackItem,
         isYouTubeEngine: false,
         url: trackItem.url
       };
+      this.streamCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
     }
 
     return trackItem;
